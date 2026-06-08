@@ -12,9 +12,14 @@ export const Wrapper = styled.div`
   user-select: none;
 `;
 
-export const Frame = styled.div`
-  width: 343px;
-  height: 206px;
+interface FrameProps {
+  $width: number;
+  $height: number;
+}
+
+export const Frame = styled.div<FrameProps>`
+  width: ${({ $width }) => `${$width}px`};
+  height: ${({ $height }) => `${$height}px`};
   border: 2px solid ${({ theme }) => theme.colors.primary};
   border-radius: ${({ theme }) => theme.radius.lg};
   background-color: ${({ theme }) => theme.colors.white};

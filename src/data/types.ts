@@ -45,3 +45,11 @@ export interface ProjectListItem {
   thumbnail: string;
   group: 'SW' | 'DE';
 }
+
+export type TeamMemberRole = 'BE' | 'FE' | 'DE';
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  role: TeamMemberRole;
+}
