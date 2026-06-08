@@ -1,61 +1,82 @@
+import type { IeumProjectDetail } from '@/api/ieumApi';
+import { EXPERIENCE_CATEGORIES } from '@/data';
 import * as S from './ServiceIntroSection.styled';
 
 interface ServiceIntroSectionProps {
+  project: IeumProjectDetail;
+  actionsEnabled: boolean;
   onFeedback: () => void;
   onHire: () => void;
 }
 
-const TAGS: Array<{ label: string; bg: string; color: string }> = [
-  { label: 'Language', bg: '#DCE9FB', color: '#3C6CB8' },
-  { label: 'Framework', bg: '#FBDDE3', color: '#D4596A' },
-  { label: 'Database', bg: '#D7F0DD', color: '#3FA45A' },
-  { label: 'External API / AI', bg: '#FCF1CE', color: '#C9A33A' },
-  { label: 'Tools & Container', bg: '#D6F0E5', color: '#3DA784' },
-];
-
 function ServiceIntroSection({
+  project,
+  actionsEnabled,
   onFeedback,
   onHire,
 }: ServiceIntroSectionProps) {
+  const thumbnail =
+    project.thumbnailUrl ?? project.thumbnailPath ?? '/assets/image/growvy.png';
+  const banner = `${project.experienceCategory?.toUpperCase() ?? 'PROJECT'} EXPERIENCE`;
+  const bannerColor =
+    EXPERIENCE_CATEGORIES.find(
+      (category) => category.id === project.experienceCategory,
+    )?.color ?? '#D88E70';
+
   return (
     <S.Wrapper>
-      <S.ScrollArea>
-        <S.Banner>GLOBAL EXPERIENCE</S.Banner>
+      <S.ScrollArea $hasCta={actionsEnabled}>
+        <S.Banner $background={bannerColor}>{banner}</S.Banner>
 
         <S.Card>
-          <img src="/assets/image/growvy.png" alt="Growy 서비스 미리보기" />
+          <img src={thumbnail} alt={`${project.serviceName} 서비스 미리보기`} />
         </S.Card>
 
         <S.TitleRow>
-          <S.ServiceName>Growy</S.ServiceName>
+          <S.ServiceName>{project.serviceName}</S.ServiceName>
           <S.LikeButton type="button" aria-label="좋아요">
             <img src="/assets/icons/like_icon.svg" alt="" aria-hidden="true" />
           </S.LikeButton>
         </S.TitleRow>
 
         <S.Description>
-          {
-            '호주 Gap Year 청년들이 다양한 경험을 통해\n자신의 적성을 발견하고 기록하는 구인구직 서비스'
-          }
+          {project.description}
         </S.Description>
 
         <S.TagList>
-          {TAGS.map((tag) => (
-            <S.Tag key={tag.label} $bg={tag.bg} $color={tag.color}>
-              {tag.label}
-            </S.Tag>
-          ))}
+          {project.stackGroups.flatMap((group) =>
+            group.items.map((item) => (
+              <S.Tag
+                key={`${group.category}-${item}`}
+                $bg={`${group.color}33`}
+                $color={group.color}
+              >
+                {item}
+              </S.Tag>
+            )),
+          )}
         </S.TagList>
+
+        <S.DetailList>
+          {project.featureDescriptions.map((feature) => (
+            <S.DetailBlock key={feature.title}>
+              <S.DetailTitle>{feature.title}</S.DetailTitle>
+              <S.FeatureText>{feature.description}</S.FeatureText>
+            </S.DetailBlock>
+          ))}
+        </S.DetailList>
       </S.ScrollArea>
 
-      <S.BottomCTA>
-        <S.FeedbackButton type="button" onClick={onFeedback}>
-          피드백
-        </S.FeedbackButton>
-        <S.HireButton type="button" onClick={onHire}>
-          채용
-        </S.HireButton>
-      </S.BottomCTA>
+      {actionsEnabled ? (
+        <S.BottomCTA>
+          <S.FeedbackButton type="button" onClick={onFeedback}>
+            피드백
+          </S.FeedbackButton>
+          <S.HireButton type="button" onClick={onHire}>
+            채용
+          </S.HireButton>
+        </S.BottomCTA>
+      ) : null}
     </S.Wrapper>
   );
 }

@@ -58,6 +58,13 @@ export const MemberRole = styled.span`
   color: #7a7a7a;
 `;
 
+export const EmptyText = styled.p`
+  padding: 12px 4px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #777777;
+`;
+
 export const BottomCTA = styled.div`
   position: absolute;
   left: ${({ theme }) => theme.layout.pagePadding};

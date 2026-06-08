@@ -26,6 +26,7 @@ import * as S from './MapPage.styled';
 interface MapPageProps {
   onClickQr: () => void;
   onPickCategory: (categoryId: ExperienceCategoryId) => void;
+  onPickBooth: (booth: Booth) => void;
 }
 
 const MIN_SCALE = 0.5;
@@ -68,7 +69,7 @@ interface ActivePointer {
   y: number;
 }
 
-function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
+function MapPage({ onClickQr, onPickCategory, onPickBooth }: MapPageProps) {
   const stageRef = useRef<HTMLDivElement>(null);
 
   const [stageSize, setStageSize] = useState({ w: 0, h: 0 });
@@ -318,6 +319,10 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
     e: React.MouseEvent<HTMLButtonElement>,
   ) => {
     e.stopPropagation();
+    if (booth.serviceName) {
+      onPickBooth(booth);
+      return;
+    }
     onPickCategory(booth.categoryId);
   };
 

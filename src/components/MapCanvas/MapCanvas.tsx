@@ -159,7 +159,7 @@ function generateWiring(): { dots: Pt[]; lines: Ln[] } {
  * Booth buttons and category pills are layered on top by MapPage.
  */
 function MapCanvas({ width, height }: MapCanvasProps) {
-  const wiring = useMemo(generateWiring, []);
+  const wiring = useMemo(() => generateWiring(), []);
 
   return (
     <S.Canvas style={{ width, height }}>

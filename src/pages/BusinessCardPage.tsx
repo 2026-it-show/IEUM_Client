@@ -6,6 +6,7 @@ import {
   BusinessCardFormSection,
 } from '@/sections';
 import type { BusinessCard, BusinessCardField } from '@/data';
+import { saveBusinessCard } from '@/storage/businessCardStorage';
 import * as S from './BusinessCardPage.styled';
 
 type Step = 'scan' | 'form';
@@ -42,6 +43,7 @@ function BusinessCardPage() {
   };
 
   const handleSubmit = () => {
+    saveBusinessCard(card);
     navigate('/app');
   };
 

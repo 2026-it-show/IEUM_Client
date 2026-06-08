@@ -8,3 +8,10 @@ export const Page = styled.div`
   background-color: ${({ theme }) => theme.colors.white};
   overflow: hidden;
 `;
+
+export const StatusText = styled.p`
+  padding: 32px ${({ theme }) => theme.layout.pagePadding};
+  font-size: 15px;
+  line-height: 1.5;
+  color: #777777;
+`;

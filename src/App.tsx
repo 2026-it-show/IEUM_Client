@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
 import { GlobalStyle, theme } from '@/styles';
@@ -12,6 +12,14 @@ import {
   ServiceIntroPage,
 } from '@/pages';
 import type { ExperienceCategoryId } from '@/data';
+import type { Booth } from '@/data';
+import {
+  createFeedback,
+  createRecruiterContact,
+  listProjectsByCategory,
+  type IeumProjectDetail,
+} from '@/api/ieumApi';
+import { loadBusinessCard } from '@/storage/businessCardStorage';
 import SplashScreen from '@/pages/Splash/SplashScreen';
 import Information from '@/pages/Survey/Information';
 import Agreement1 from '@/pages/Survey/Agreement1';
@@ -39,8 +47,15 @@ const VALID_PAGES = new Set<AppPage>([
   'feedback',
 ]);
 
-function getInitialPageState(): { page: AppPage; cat: ExperienceCategoryId } {
-  if (typeof window === 'undefined') return { page: 'map', cat: 'global' };
+function getInitialPageState(): {
+  page: AppPage;
+  cat: ExperienceCategoryId;
+  projectId: string | null;
+  actionsEnabled: boolean;
+} {
+  if (typeof window === 'undefined') {
+    return { page: 'map', cat: 'global', projectId: null, actionsEnabled: false };
+  }
   const params = new URLSearchParams(window.location.search);
   const pageParam = params.get('page');
   const catParam = params.get('cat') as ExperienceCategoryId | null;
@@ -49,20 +64,100 @@ function getInitialPageState(): { page: AppPage; cat: ExperienceCategoryId } {
       ? (pageParam as AppPage)
       : 'map';
   const cat = catParam ?? 'global';
-  return { page, cat };
+  return {
+    page,
+    cat,
+    projectId: params.get('projectId'),
+    actionsEnabled: params.get('actions') === '1',
+  };
 }
 
 function MainAppFlow() {
   const initial = getInitialPageState();
   const [page, setPage] = useState<AppPage>(initial.page);
-  const [serviceVisited, setServiceVisited] = useState(false);
+  const [serviceVisited, setServiceVisited] = useState(!initial.actionsEnabled);
+  const [actionsEnabled, setActionsEnabled] = useState(initial.actionsEnabled);
   const [toast, setToast] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] =
     useState<ExperienceCategoryId>(initial.cat);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+    initial.projectId,
+  );
+  const [selectedProject, setSelectedProject] =
+    useState<IeumProjectDetail | null>(null);
 
-  const goToServiceIntro = () => {
+  const goToServiceIntro = useCallback(() => {
     setPage('service-intro');
-  };
+  }, []);
+
+  const handleProjectLoaded = useCallback((project: IeumProjectDetail) => {
+    setSelectedProject(project);
+  }, []);
+
+  const handleBoothPick = useCallback(
+    async (booth: Booth) => {
+      setSelectedCategory(booth.categoryId);
+      setSelectedProject(null);
+      setActionsEnabled(false);
+      setServiceVisited(true);
+      setToast(null);
+
+      try {
+        const projects = await listProjectsByCategory(booth.categoryId);
+        const project =
+          projects.find((item) => item.boothSlot === booth.title) ??
+          projects.find((item) => item.serviceName === booth.serviceName);
+
+        if (!project) {
+          setPage('category-list');
+          return;
+        }
+
+        setSelectedProjectId(project.id);
+        goToServiceIntro();
+      } catch (error) {
+        if (!(error instanceof Error)) throw error;
+        setPage('category-list');
+      }
+    },
+    [goToServiceIntro],
+  );
+
+  const handleFeedbackSubmit = useCallback(
+    async (message: string) => {
+      if (!selectedProjectId) return;
+      try {
+        await createFeedback(selectedProjectId, message);
+        setToast('소중한 의견 감사합니다');
+      } catch (error) {
+        if (!(error instanceof Error)) throw error;
+        setToast('피드백 전송에 실패했습니다');
+      }
+      setServiceVisited(true);
+      goToServiceIntro();
+    },
+    [goToServiceIntro, selectedProjectId],
+  );
+
+  const handleHireSubmit = useCallback(
+    async (memberId: string) => {
+      if (!selectedProjectId) return;
+      try {
+        await createRecruiterContact(
+          selectedProjectId,
+          memberId,
+          loadBusinessCard(),
+        );
+        setToast('채용 의사가 성공적으로 전달되었습니다');
+      } catch (error) {
+        if (!(error instanceof Error)) throw error;
+        setToast('채용 의사 전달에 실패했습니다');
+      }
+      setServiceVisited(true);
+      goToServiceIntro();
+    },
+    [goToServiceIntro, selectedProjectId],
+  );
 
   const renderPage = () => {
     switch (page) {
@@ -71,6 +166,7 @@ function MainAppFlow() {
           <QrScanPage
             onBack={() => setPage('map')}
             onScanned={() => {
+              setActionsEnabled(true);
               setServiceVisited(false);
               setToast(null);
               goToServiceIntro();
@@ -80,9 +176,12 @@ function MainAppFlow() {
       case 'service-intro':
         return (
           <ServiceIntroPage
-            onBack={() => setPage('category-list')}
+            projectId={selectedProjectId}
+            actionsEnabled={actionsEnabled}
+            onBack={() => setPage(actionsEnabled ? 'map' : 'category-list')}
             onHire={() => setPage('hire')}
             onFeedback={() => setPage('feedback')}
+            onProjectLoaded={handleProjectLoaded}
             showGuide={!serviceVisited}
             onGuideDismiss={() => setServiceVisited(true)}
             toast={toast}
@@ -92,23 +191,20 @@ function MainAppFlow() {
       case 'hire':
         return (
           <HirePage
+            members={(selectedProject?.members ?? []).map((member) => ({
+              id: member.id,
+              name: member.name,
+              role: roleLabel(member.roles),
+            }))}
             onBack={() => setPage('service-intro')}
-            onSubmit={() => {
-              setToast('채용 의사가 성공적으로 전달되었습니다');
-              setServiceVisited(true);
-              goToServiceIntro();
-            }}
+            onSubmit={handleHireSubmit}
           />
         );
       case 'feedback':
         return (
           <FeedbackPage
             onBack={() => setPage('service-intro')}
-            onSubmit={() => {
-              setToast('소중한 의견 감사합니다');
-              setServiceVisited(true);
-              goToServiceIntro();
-            }}
+            onSubmit={handleFeedbackSubmit}
           />
         );
       case 'business-card':
@@ -118,8 +214,11 @@ function MainAppFlow() {
           <CategoryListPage
             categoryId={selectedCategory}
             onBack={() => setPage('map')}
-            onPickProject={() => {
-              setServiceVisited(false);
+            onPickProject={(project) => {
+              setSelectedProjectId(project.id);
+              setSelectedProject(null);
+              setActionsEnabled(false);
+              setServiceVisited(true);
               setToast(null);
               goToServiceIntro();
             }}
@@ -130,6 +229,7 @@ function MainAppFlow() {
         return (
           <MapPage
             onClickQr={() => setPage('qr-scan')}
+            onPickBooth={handleBoothPick}
             onPickCategory={(categoryId) => {
               setSelectedCategory(categoryId);
               setPage('category-list');
@@ -140,6 +240,19 @@ function MainAppFlow() {
   };
 
   return renderPage();
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  backend: 'BE',
+  frontend: 'FE',
+  design: 'DE',
+  pm: 'PM',
+  ai: 'AI',
+};
+
+function roleLabel(roles: string[]): string {
+  const labels = roles.map((role) => ROLE_LABELS[role] ?? role);
+  return labels.length ? labels.join(', ') : 'MEMBER';
 }
 
 function App() {

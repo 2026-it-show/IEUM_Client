@@ -8,11 +8,12 @@ export const Wrapper = styled.section`
   min-height: 0;
 `;
 
-export const ScrollArea = styled.div`
+export const ScrollArea = styled.div<{ $hasCta: boolean }>`
   flex: 1;
   overflow-y: auto;
   padding-bottom: calc(
-    ${({ theme }) => theme.layout.bottomCTAOffset} + 56px + 32px
+    ${({ theme, $hasCta }) =>
+      $hasCta ? `${theme.layout.bottomCTAOffset} + 56px + 32px` : '40px'}
   );
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -22,14 +23,14 @@ export const ScrollArea = styled.div`
   }
 `;
 
-export const Banner = styled.div`
+export const Banner = styled.div<{ $background: string }>`
   margin-top: 16px;
   width: 100%;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f6a06e;
+  background-color: ${({ $background }) => $background};
   color: ${({ theme }) => theme.colors.white};
   font-size: 18px;
   letter-spacing: 1px;
@@ -84,7 +85,7 @@ export const Description = styled.p`
 export const TagList = styled.ul`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px 9px;
   padding: 18px ${({ theme }) => theme.layout.pagePadding} 0;
 `;
 
@@ -94,11 +95,43 @@ interface TagProps {
 }
 
 export const Tag = styled.li<TagProps>`
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 13px;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 35px;
   background-color: ${({ $bg }) => $bg};
   color: ${({ $color }) => $color};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+`;
+
+export const DetailList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 6px ${({ theme }) => theme.layout.pagePadding} 24px;
+`;
+
+export const DetailBlock = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+export const DetailTitle = styled.h3`
+  font-size: 14px;
+  line-height: 16px;
+  color: #222222;
+`;
+
+export const FeatureText = styled.p`
+  font-size: 13px;
+  line-height: 1.5;
+  color: #555555;
 `;
 
 export const BottomCTA = styled.div`

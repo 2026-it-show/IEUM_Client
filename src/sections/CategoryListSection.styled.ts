@@ -30,6 +30,13 @@ export const GroupLabel = styled.div`
   margin-bottom: 14px;
 `;
 
+export const Message = styled.p`
+  padding: 30px 4px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #777777;
+`;
+
 export const Grid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;

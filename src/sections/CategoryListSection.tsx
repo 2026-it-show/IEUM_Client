@@ -4,11 +4,13 @@ import * as S from './CategoryListSection.styled';
 
 interface CategoryListSectionProps {
   projects: ProjectListItem[];
+  message?: string;
   onPickProject: (project: ProjectListItem) => void;
 }
 
 function CategoryListSection({
   projects,
+  message,
   onPickProject,
 }: CategoryListSectionProps) {
   const grouped = useMemo(() => {
@@ -23,6 +25,7 @@ function CategoryListSection({
 
   return (
     <S.Wrapper>
+      {message ? <S.Message>{message}</S.Message> : null}
       {grouped.map(({ group, items }) => (
         <div key={group}>
           <S.GroupLabel>{group}</S.GroupLabel>
