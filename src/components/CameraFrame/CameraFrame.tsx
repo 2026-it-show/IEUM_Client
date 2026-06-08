@@ -2,11 +2,17 @@ import * as S from './CameraFrame.styled';
 
 interface CameraFrameProps {
   hint?: string;
+  width?: number;
+  height?: number;
+  ariaLabel?: string;
   onCapture: () => void;
 }
 
 function CameraFrame({
   hint = '보이는 칸에 알맞게 명함을 비춰주세요',
+  width = 343,
+  height = 206,
+  ariaLabel = '명함 촬영',
   onCapture,
 }: CameraFrameProps) {
   return (
@@ -17,9 +23,9 @@ function CameraFrame({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') onCapture();
       }}
-      aria-label="명함 촬영"
+      aria-label={ariaLabel}
     >
-      <S.Frame />
+      <S.Frame $width={width} $height={height} />
       <S.Hint>{hint}</S.Hint>
     </S.Wrapper>
   );

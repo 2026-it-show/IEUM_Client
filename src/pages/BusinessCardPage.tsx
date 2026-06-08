@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BackHeader } from '@/components';
 import {
   BusinessCardScanSection,
@@ -19,6 +20,7 @@ const EMPTY_CARD: BusinessCard = {
 };
 
 function BusinessCardPage() {
+  const navigate = useNavigate();
   const [step, setStep] = useState<Step>('scan');
   const [card, setCard] = useState<BusinessCard>(EMPTY_CARD);
 
@@ -40,7 +42,7 @@ function BusinessCardPage() {
   };
 
   const handleSubmit = () => {
-    console.log('[BusinessCardPage] submit', card);
+    navigate('/app');
   };
 
   return (

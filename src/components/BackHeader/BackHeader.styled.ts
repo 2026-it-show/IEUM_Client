@@ -15,31 +15,21 @@ const resolveColor = (
 export const Header = styled.header`
   display: flex;
   align-items: center;
-  padding: 65px ${({ theme }) => theme.layout.pagePadding} 0;
+  padding: 60px ${({ theme }) => theme.layout.pagePadding} 0;
   flex-shrink: 0;
 `;
 
-export const BackButton = styled.button`
+export const BackButton = styled.button<VariantProps>`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 0;
+  color: ${({ theme, $color }) =>
+    resolveColor($color, theme.colors.white, theme.colors.black)};
 `;
 
-export const Icon = styled.span<VariantProps>`
-  display: inline-block;
-  width: 17px;
-  height: 34px;
-  flex-shrink: 0;
-  background-color: ${({ theme, $color }) =>
-    resolveColor($color, theme.colors.textLight, theme.colors.black)};
-  -webkit-mask: url('/assets/icons/back_icon.svg') no-repeat center / contain;
-  mask: url('/assets/icons/back_icon.svg') no-repeat center / contain;
-`;
-
-export const Title = styled.span<VariantProps>`
+export const Title = styled.span`
   font-size: 16px;
   line-height: 1;
-  color: ${({ theme, $color }) =>
-    resolveColor($color, theme.colors.textLight, theme.colors.black)};
+  color: inherit;
 `;
