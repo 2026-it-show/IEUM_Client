@@ -103,11 +103,11 @@ function ServiceIntroPage({
           contactSubmitted={contactSubmitted}
         />
       ) : (
-        <S.StatusText>
-          {status === 'loading'
-            ? '프로젝트를 불러오는 중입니다'
-            : '프로젝트 정보를 불러오지 못했습니다'}
-        </S.StatusText>
+        status === 'loading' ? (
+          <ServiceIntroSkeleton />
+        ) : (
+          <S.StatusText>프로젝트 정보를 불러오지 못했습니다</S.StatusText>
+        )
       )}
       {actionsEnabled && showGuide && !toast && (
         <PrototypeGuideOverlay
@@ -119,6 +119,36 @@ function ServiceIntroPage({
         <SuccessToast message={toast} onDismiss={onToastDismiss} />
       )}
     </S.Page>
+  );
+}
+
+function ServiceIntroSkeleton() {
+  return (
+    <S.SkeletonScroll aria-hidden="true">
+      <S.SkeletonHero />
+      <S.SkeletonTitleRow>
+        <S.SkeletonTitleBlock>
+          <S.SkeletonTitle />
+          <S.SkeletonTextLine $width="86%" />
+          <S.SkeletonTextLine $width="72%" />
+        </S.SkeletonTitleBlock>
+        <S.SkeletonHeart />
+      </S.SkeletonTitleRow>
+      <S.SkeletonTags>
+        {['64px', '96px', '84px', '120px'].map((width) => (
+          <S.SkeletonTag key={width} $width={width} />
+        ))}
+      </S.SkeletonTags>
+      <S.SkeletonDetailList>
+        {['92%', '78%', '86%'].map((width) => (
+          <S.SkeletonDetailBlock key={width}>
+            <S.SkeletonSectionTitle />
+            <S.SkeletonTextLine $width={width} />
+            <S.SkeletonTextLine $width="66%" />
+          </S.SkeletonDetailBlock>
+        ))}
+      </S.SkeletonDetailList>
+    </S.SkeletonScroll>
   );
 }
 

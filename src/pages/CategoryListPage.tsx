@@ -68,6 +68,7 @@ function CategoryListPage({
       <BackHeader title={title} onBack={onBack} />
       <CategoryListSection
         projects={listItems}
+        isLoading={status === 'loading'}
         message={message}
         onPickProject={onPickProject}
       />

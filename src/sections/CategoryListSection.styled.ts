@@ -1,4 +1,25 @@
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
+
+const skeletonPulse = keyframes`
+  0% {
+    background-position: 120% 0;
+  }
+
+  100% {
+    background-position: -120% 0;
+  }
+`;
+
+const skeletonSurface = css`
+  background: linear-gradient(
+    90deg,
+    #f2f2f2 0%,
+    #fafafa 42%,
+    #ececec 78%
+  );
+  background-size: 220% 100%;
+  animation: ${skeletonPulse} 1.1s ease-in-out infinite;
+`;
 
 export const Wrapper = styled.section`
   flex: 1;
@@ -95,4 +116,47 @@ export const CardName = styled.span`
   font-size: 16px;
   color: ${({ theme }) => theme.colors.black};
   line-height: 1.25;
+`;
+
+export const SkeletonGroupLabel = styled.div`
+  width: 54px;
+  height: 31px;
+  border-radius: 999px;
+  margin-top: 14px;
+  margin-bottom: 14px;
+  ${skeletonSurface}
+`;
+
+export const SkeletonCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+export const SkeletonThumbnail = styled.div`
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  ${skeletonSurface}
+`;
+
+export const SkeletonInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-left: 4px;
+`;
+
+export const SkeletonBooth = styled.div`
+  width: 38px;
+  height: 19px;
+  border-radius: 999px;
+  ${skeletonSurface}
+`;
+
+export const SkeletonName = styled.div`
+  width: 74%;
+  height: 19px;
+  border-radius: 6px;
+  ${skeletonSurface}
 `;

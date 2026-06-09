@@ -74,6 +74,11 @@ export type IeumProjectSummary = z.infer<typeof projectSummarySchema>;
 export type IeumProjectDetail = z.infer<typeof projectDetailSchema>;
 export type IeumProjectMember = z.infer<typeof projectMemberSchema>;
 
+interface ProjectListCacheEntry {
+  readonly expiresAt: number;
+  readonly promise: Promise<IeumProjectSummary[]>;
+}
+
 const FEEDBACK_DISABLED_BOOTH_SLOTS = new Set([
   'A6',
   'B3',
@@ -82,15 +87,31 @@ const FEEDBACK_DISABLED_BOOTH_SLOTS = new Set([
   'D6',
   'E2',
 ]);
+const PROJECT_LIST_CACHE_TTL_MS = 30_000;
+const projectListCache = new Map<string, ProjectListCacheEntry>();
 
 export async function listProjectsByCategory(
   category: string,
 ): Promise<IeumProjectSummary[]> {
-  const data = await requestData(
-    `/projects?category=${encodeURIComponent(category)}&limit=80`,
+  const now = Date.now();
+  const cached = projectListCache.get(category);
+  if (cached && cached.expiresAt > now) {
+    return cached.promise;
+  }
+  const promise = requestData(
+    `/projects?category=${encodeURIComponent(category)}&limit=80&includeCounts=false`,
     projectListSchema,
-  );
-  return data.items.map(applyFeedbackPolicy);
+  )
+    .then((data) => data.items.map(applyFeedbackPolicy))
+    .catch((error: unknown) => {
+      projectListCache.delete(category);
+      throw error;
+    });
+  projectListCache.set(category, {
+    expiresAt: now + PROJECT_LIST_CACHE_TTL_MS,
+    promise,
+  });
+  return promise;
 }
 
 export async function getProjectDetail(
