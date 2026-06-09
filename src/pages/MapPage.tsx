@@ -39,11 +39,17 @@ const DRAG_THRESHOLD_PX = 6;
 const PINCH_THRESHOLD_PX = 4;
 const NATURAL_MAP_W = FIGMA_MAP_SIZE.w;
 const NATURAL_MAP_H = FIGMA_MAP_SIZE.h;
+const MOBILE_INITIAL_TOP_OFFSET = 58;
 
 function getInitialScale(stageWidth: number, stageHeight: number): number {
   const widthScale = (stageWidth - 32) / NATURAL_MAP_W;
-  const heightScale = (stageHeight - 28) / NATURAL_MAP_H;
-  return Math.min(0.55, Math.max(0.36, widthScale, heightScale));
+  const topOffset = getInitialTopOffset(stageWidth);
+  const heightScale = (stageHeight + topOffset) / NATURAL_MAP_H;
+  return Math.min(0.62, Math.max(0.36, widthScale, heightScale));
+}
+
+function getInitialTopOffset(stageWidth: number): number {
+  return stageWidth <= 520 ? MOBILE_INITIAL_TOP_OFFSET : 0;
 }
 
 function tileStyle(item: {
@@ -165,8 +171,8 @@ function MapPage({ onClickQr, onPickCategory, onPickBooth }: MapPageProps) {
       setTx(rect.width / 2 - focal.x * baseW * initialScale);
       setTy(rect.height / 2 - focal.y * baseH * initialScale);
     } else {
-      setTx(Math.max(0, (rect.width - baseW * initialScale) / 2));
-      setTy(0);
+      setTx((rect.width - baseW * initialScale) / 2);
+      setTy(getInitialTopOffset(rect.width));
     }
   }, []);
 
