@@ -45,10 +45,11 @@ export const CenterCaption = styled.p`
 
 export const QrCaption = styled.p`
   position: absolute;
-  right: 28px;
-  bottom: 121px;
+  left: calc(215.5 / 390 * 100%);
+  top: calc(687 / 844 * 100%);
   width: min(293px, calc(100% - 56px));
   margin: 0;
+  transform: translateX(-50%);
   font-size: 12px;
   font-weight: 500;
   line-height: 1.5;
@@ -58,18 +59,19 @@ export const QrCaption = styled.p`
 
 export const QrArrow = styled.img`
   position: absolute;
-  right: 58px;
-  bottom: 33px;
+  left: calc(262 / 390 * 100%);
+  top: calc(739 / 844 * 100%);
   width: 35px;
   height: 36px;
+  transform: rotate(180deg);
   pointer-events: none;
 `;
 
 export const QrSpot = styled.div`
   position: absolute;
-  right: 31px;
-  bottom: 31px;
-  width: 55px;
+  left: calc(304 / 390 * 100%);
+  top: calc(763 / 844 * 100%);
+  width: 52px;
   height: 50px;
   display: inline-flex;
   align-items: center;
