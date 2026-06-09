@@ -7,6 +7,7 @@ import {
   loadProjectInterest,
   saveProjectInterest,
 } from '@/storage/userInteractionStorage';
+import { toOptimizedImagePath } from '@/utils/imageAssets';
 import * as S from './ServiceIntroSection.styled';
 
 interface ServiceIntroSectionProps {
@@ -37,8 +38,7 @@ function ServiceIntroSection({
       : loadProjectInterest(project.id);
   const saving =
     interestState.projectId === project.id ? interestState.saving : false;
-  const thumbnail =
-    project.thumbnailUrl ?? project.thumbnailPath ?? '/assets/image/growvy.png';
+  const thumbnail = toOptimizedImagePath(project.thumbnailUrl ?? project.thumbnailPath);
 
   const handleInterestToggle = () => {
     if (interested || saving) return;

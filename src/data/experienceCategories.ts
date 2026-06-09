@@ -4,6 +4,7 @@ import type {
   ExperienceCategoryId,
   ProjectListItem,
 } from './types';
+import { FALLBACK_PROJECT_THUMBNAIL } from '@/utils/imageAssets';
 
 export const EXPERIENCE_CATEGORIES: ExperienceCategory[] = [
   { id: 'ai', title: 'AI Experience', color: '#2B92D0', x: 0.1998, y: 0.2673 },
@@ -14,8 +15,6 @@ export const EXPERIENCE_CATEGORIES: ExperienceCategory[] = [
   { id: 'global', title: 'Global Experience', color: '#D88E70', x: 0.1031, y: 0.6258 },
   { id: 'journey', title: 'Journey Experience', color: '#C797C5', x: 0.8471, y: 0.8401 },
 ];
-
-const GROWY_THUMBNAIL = '/assets/image/growvy.png';
 
 // Booth-IDs that should be grouped under "DE" (design exhibits). Everything
 // else falls into the default "SW" group.
@@ -52,7 +51,7 @@ function buildCategoryProjects(): Record<
     acc[booth.categoryId].push({
       id: booth.id,
       name: booth.serviceName,
-      thumbnail: GROWY_THUMBNAIL,
+      thumbnail: FALLBACK_PROJECT_THUMBNAIL,
       group: DE_BOOTH_IDS.has(booth.id) ? 'DE' : 'SW',
     });
   }

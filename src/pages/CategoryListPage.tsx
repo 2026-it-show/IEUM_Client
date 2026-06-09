@@ -10,6 +10,7 @@ import {
   listProjectsByCategory,
   type IeumProjectSummary,
 } from '@/api/ieumApi';
+import { toOptimizedImagePath } from '@/utils/imageAssets';
 import * as S from './CategoryListPage.styled';
 
 interface CategoryListPageProps {
@@ -92,8 +93,7 @@ function toProjectListItem(project: IeumProjectSummary): ProjectListItem {
   return {
     id: project.id,
     name: project.serviceName,
-    thumbnail:
-      project.thumbnailUrl ?? project.thumbnailPath ?? '/assets/image/growvy.png',
+    thumbnail: toOptimizedImagePath(project.thumbnailUrl ?? project.thumbnailPath),
     group: project.boothSlot && DE_BOOTH_IDS.has(project.boothSlot) ? 'DE' : 'SW',
     boothSlot: project.boothSlot ?? undefined,
   };
