@@ -13,6 +13,7 @@ import * as S from './ServiceIntroSection.styled';
 interface ServiceIntroSectionProps {
   project: IeumProjectDetail;
   actionsEnabled: boolean;
+  canHire: boolean;
   onFeedback: () => void;
   onHire: () => void;
   feedbackSubmitted: boolean;
@@ -22,6 +23,7 @@ interface ServiceIntroSectionProps {
 function ServiceIntroSection({
   project,
   actionsEnabled,
+  canHire,
   onFeedback,
   onHire,
   feedbackSubmitted,
@@ -117,13 +119,15 @@ function ServiceIntroSection({
               {feedbackSubmitted ? '피드백 완료' : '피드백'}
             </S.FeedbackButton>
           ) : null}
-          <S.HireButton
-            type="button"
-            onClick={onHire}
-            disabled={contactSubmitted}
-          >
-            {contactSubmitted ? '채용 완료' : '채용'}
-          </S.HireButton>
+          {canHire ? (
+            <S.HireButton
+              type="button"
+              onClick={onHire}
+              disabled={contactSubmitted}
+            >
+              {contactSubmitted ? '채용 완료' : '채용'}
+            </S.HireButton>
+          ) : null}
         </S.BottomCTA>
       ) : null}
     </S.Wrapper>

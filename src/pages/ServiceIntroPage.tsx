@@ -16,6 +16,7 @@ interface ServiceIntroPageProps {
   projectId: string | null;
   isResolvingProject?: boolean;
   actionsEnabled: boolean;
+  canHire: boolean;
   onBack: () => void;
   onHire: () => void;
   onFeedback: () => void;
@@ -40,6 +41,7 @@ function ServiceIntroPage({
   projectId,
   isResolvingProject = false,
   actionsEnabled,
+  canHire,
   onBack,
   onHire,
   onFeedback,
@@ -101,6 +103,7 @@ function ServiceIntroPage({
         <ServiceIntroSection
           project={project}
           actionsEnabled={actionsEnabled}
+          canHire={canHire}
           onFeedback={onFeedback}
           onHire={onHire}
           feedbackSubmitted={feedbackSubmitted}

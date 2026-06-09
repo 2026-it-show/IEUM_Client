@@ -29,11 +29,14 @@ import { loadBusinessCard } from '@/storage/businessCardStorage';
 import {
   hasDismissedMapTutorial,
   hasDismissedOnboardingGuide,
+  hasCompletedInitialOnboarding,
+  hasRecruiterPurpose,
   hasSubmittedProjectAction,
   markMapTutorialDismissed,
   markOnboardingGuideDismissed,
   markProjectActionSubmitted,
 } from '@/storage/userInteractionStorage';
+import { buildSurveyStartPath } from '@/utils/surveyReturn';
 import SplashScreen from '@/pages/Splash/SplashScreen';
 import Information from '@/pages/Survey/Information';
 import Agreement1 from '@/pages/Survey/Agreement1';
@@ -295,6 +298,7 @@ function MainAppFlow() {
             projectId={selectedProjectId}
             isResolvingProject={isResolvingBooth}
             actionsEnabled={actionsEnabled}
+            canHire={actionsEnabled && hasRecruiterPurpose()}
             onBack={() => setPage(serviceIntroBackTarget)}
             onHire={() => setPage('hire')}
             onFeedback={() => {
@@ -387,10 +391,14 @@ function ProjectEntryRoute() {
   if (!projectId) {
     return <Navigate to="/app" replace />;
   }
+  const target = `/app?page=service-intro&projectId=${encodeURIComponent(projectId)}&actions=1`;
+  if (!hasCompletedInitialOnboarding()) {
+    return <Navigate to={buildSurveyStartPath(target)} replace />;
+  }
 
   return (
     <Navigate
-      to={`/app?page=service-intro&projectId=${encodeURIComponent(projectId)}&actions=1`}
+      to={target}
       replace
     />
   );
@@ -401,10 +409,14 @@ function BoothEntryRoute() {
   if (!boothSlot) {
     return <Navigate to="/app" replace />;
   }
+  const target = `/app?page=service-intro&boothSlot=${encodeURIComponent(boothSlot)}&actions=1`;
+  if (!hasCompletedInitialOnboarding()) {
+    return <Navigate to={buildSurveyStartPath(target)} replace />;
+  }
 
   return (
     <Navigate
-      to={`/app?page=service-intro&boothSlot=${encodeURIComponent(boothSlot)}&actions=1`}
+      to={target}
       replace
     />
   );

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'; // 💡 useEffect 추가
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { markInitialOnboardingCompleted } from '@/storage/userInteractionStorage';
+import { markInitialOnboardingCompleted, saveVisitorPurpose } from '@/storage/userInteractionStorage';
+import { readSurveyReturnTo, withSurveyReturnTo } from '@/utils/surveyReturn';
 
 // --- 데이터 정의 ---
 interface AgeOption {
@@ -164,7 +165,7 @@ const Purpose: React.FC = () => {
           src="/assets/icons/back_icon.svg"
           alt="Back"
           draggable={false}
-          onClick={() => navigate('/survey/gender')}
+          onClick={() => navigate(withSurveyReturnTo('/survey/gender'))}
         />
 
         <ProgressBarContainer>
@@ -190,11 +191,14 @@ const Purpose: React.FC = () => {
           $isActive={selectedId !== null}
           disabled={selectedId === null}
           onClick={() => {
+            const purpose = selectedId;
+            if (purpose !== 'employment' && purpose !== 'viewing') return;
             markInitialOnboardingCompleted();
-            if (selectedId === 'employment') {
-              navigate('/business-card');
+            saveVisitorPurpose(purpose);
+            if (purpose === 'employment') {
+              navigate(withSurveyReturnTo('/business-card'));
             } else {
-              navigate('/app');
+              navigate(readSurveyReturnTo('/app'), { replace: true });
             }
           }} 
         >

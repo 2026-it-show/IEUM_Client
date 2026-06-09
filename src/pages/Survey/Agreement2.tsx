@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { withSurveyReturnTo } from '@/utils/surveyReturn';
 
 // --- 스타일드 컴포넌트 ---
 
@@ -74,7 +75,7 @@ const Agreement2: React.FC = () => {
           src="/assets/icons/back_icon.svg" 
           alt="Back" 
           draggable={false}
-          onClick={() => navigate('/survey/information')} 
+          onClick={() => navigate(withSurveyReturnTo('/survey/information'))} 
         />
 
         {/* 3. 헤더 타이틀 */}

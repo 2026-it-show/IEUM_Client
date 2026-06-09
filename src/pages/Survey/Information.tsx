@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { withSurveyReturnTo } from '@/utils/surveyReturn';
 
 // --- 스타일드 컴포넌트 ---
 
@@ -134,12 +135,12 @@ const Information: React.FC = () => {
 
         {/* 개별 약관 링크 리스트 */}
         <LinkListContainer>
-          <LinkItem onClick={() => navigate('/survey/agreement1')}>
+          <LinkItem onClick={() => navigate(withSurveyReturnTo('/survey/agreement1'))}>
             <CheckIcon $isChecked={isChecked}>✓</CheckIcon>
             <LinkText>[필수] 설문 응답 및 개인정보 수집·이용 동의</LinkText>
           </LinkItem>
           
-          <LinkItem onClick={() => navigate('/survey/agreement2')}>
+          <LinkItem onClick={() => navigate(withSurveyReturnTo('/survey/agreement2'))}>
             <CheckIcon $isChecked={isChecked}>✓</CheckIcon>
             <LinkText>[필수] 개인정보 제3자 제공 동의</LinkText>
           </LinkItem>
@@ -149,7 +150,7 @@ const Information: React.FC = () => {
         <NextButton 
           $isChecked={isChecked} 
           disabled={!isChecked}
-          onClick={() => navigate('/survey/age')} // 다음 진행 경로가 있다면 수정해 주세요.
+          onClick={() => navigate(withSurveyReturnTo('/survey/age'))}
         >
           다음
         </NextButton>

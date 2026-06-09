@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'; // 💡 useEffect 추가
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { withSurveyReturnTo } from '@/utils/surveyReturn';
 
 // --- 데이터 정의 ---
 interface AgeOption {
@@ -154,7 +155,7 @@ const Gender: React.FC = () => {
           src="/assets/icons/back_icon.svg"
           alt="Back"
           draggable={false}
-          onClick={() => navigate('/survey/age')}
+          onClick={() => navigate(withSurveyReturnTo('/survey/age'))}
         />
 
         <ProgressBarContainer>
@@ -179,7 +180,7 @@ const Gender: React.FC = () => {
         <NextButton 
           $isActive={selectedId !== null}
           disabled={selectedId === null}
-          onClick={() => navigate('/survey/purpose')} 
+          onClick={() => navigate(withSurveyReturnTo('/survey/purpose'))} 
         >
           다음
         </NextButton>
