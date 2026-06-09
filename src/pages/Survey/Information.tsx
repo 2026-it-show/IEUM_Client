@@ -19,18 +19,9 @@ const MobileContainer = styled.div`
   box-sizing: border-box;
 `;
 
-const NavImage = styled.img`
-  width: 390px;
-  height: 48px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 10;
-`;
-
 const Title = styled.h1`
   position: absolute;
-  top: 112px;
+  top: 64px;
   left: 24px;
   width: 342px;
   font-family: 'Gmarket Sans', sans-serif;
@@ -45,7 +36,7 @@ const Title = styled.h1`
 // 전체 동의 박스
 const AgreementBox = styled.div<{ $isChecked: boolean }>`
   position: absolute;
-  top: 230px; 
+  top: 182px;
   left: 24px;
   width: 342px;
   height: 91px;
@@ -68,7 +59,7 @@ const AgreementText = styled.span`
 
 const LinkListContainer = styled.div`
   position: absolute;
-  top: 349px; /* 박스 하단 정렬 */
+  top: 301px; /* 박스 하단 정렬 */
   left: 36px;
   width: 342px;
   display: flex;
@@ -125,9 +116,6 @@ const Information: React.FC = () => {
   return (
     <PageWrapper>
       <MobileContainer>
-        {/* 상단 내비게이션 바 */}
-        <NavImage src="/assets/nav.svg" alt="Navigation Bar" />
-
         {/* 메인 타이틀 */}
         <Title>{`서비스 이용을 위한\n약관에 동의해주세요`}</Title>
 

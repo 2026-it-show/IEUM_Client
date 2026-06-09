@@ -54,6 +54,28 @@ export const Card = styled.button`
   cursor: pointer;
 `;
 
+export const CardInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-left: 4px;
+`;
+
+export const BoothCode = styled.span`
+  align-self: flex-start;
+  min-height: 19px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background-color: #fbdde3;
+  color: ${({ theme }) => theme.colors.primary};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0;
+`;
+
 export const Thumbnail = styled.div`
   width: 100%;
   aspect-ratio: 4 / 3;
@@ -72,5 +94,5 @@ export const Thumbnail = styled.div`
 export const CardName = styled.span`
   font-size: 16px;
   color: ${({ theme }) => theme.colors.black};
-  padding-left: 4px;
+  line-height: 1.25;
 `;

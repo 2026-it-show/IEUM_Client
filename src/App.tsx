@@ -20,6 +20,12 @@ import {
   type IeumProjectDetail,
 } from '@/api/ieumApi';
 import { loadBusinessCard } from '@/storage/businessCardStorage';
+import {
+  hasDismissedOnboardingGuide,
+  hasSubmittedProjectAction,
+  markOnboardingGuideDismissed,
+  markProjectActionSubmitted,
+} from '@/storage/userInteractionStorage';
 import SplashScreen from '@/pages/Splash/SplashScreen';
 import Information from '@/pages/Survey/Information';
 import Agreement1 from '@/pages/Survey/Agreement1';
@@ -36,6 +42,8 @@ type AppPage =
   | 'category-list'
   | 'hire'
   | 'feedback';
+
+type ServiceIntroBackTarget = 'map' | 'category-list';
 
 const VALID_PAGES = new Set<AppPage>([
   'map',
@@ -74,8 +82,12 @@ function getInitialPageState(): {
 
 function MainAppFlow() {
   const initial = getInitialPageState();
+  const initialGuideDismissed = hasDismissedOnboardingGuide();
   const [page, setPage] = useState<AppPage>(initial.page);
-  const [serviceVisited, setServiceVisited] = useState(!initial.actionsEnabled);
+  const [serviceVisited, setServiceVisited] = useState(
+    !initial.actionsEnabled || initialGuideDismissed,
+  );
+  const [guideDismissed, setGuideDismissed] = useState(initialGuideDismissed);
   const [actionsEnabled, setActionsEnabled] = useState(initial.actionsEnabled);
   const [toast, setToast] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] =
@@ -85,6 +97,8 @@ function MainAppFlow() {
   );
   const [selectedProject, setSelectedProject] =
     useState<IeumProjectDetail | null>(null);
+  const [serviceIntroBackTarget, setServiceIntroBackTarget] =
+    useState<ServiceIntroBackTarget>('map');
 
   const goToServiceIntro = useCallback(() => {
     setPage('service-intro');
@@ -114,6 +128,7 @@ function MainAppFlow() {
         }
 
         setSelectedProjectId(project.id);
+        setServiceIntroBackTarget('map');
         goToServiceIntro();
       } catch (error) {
         if (!(error instanceof Error)) throw error;
@@ -125,9 +140,16 @@ function MainAppFlow() {
 
   const handleFeedbackSubmit = useCallback(
     async (message: string) => {
-      if (!selectedProjectId) return;
+      if (!selectedProjectId || selectedProject?.acceptsFeedback === false) return;
+      if (hasSubmittedProjectAction('feedback', selectedProjectId)) {
+        setToast('이미 피드백을 남겼습니다');
+        setServiceVisited(true);
+        goToServiceIntro();
+        return;
+      }
       try {
         await createFeedback(selectedProjectId, message);
+        markProjectActionSubmitted('feedback', selectedProjectId);
         setToast('소중한 의견 감사합니다');
       } catch (error) {
         if (!(error instanceof Error)) throw error;
@@ -136,18 +158,25 @@ function MainAppFlow() {
       setServiceVisited(true);
       goToServiceIntro();
     },
-    [goToServiceIntro, selectedProjectId],
+    [goToServiceIntro, selectedProject?.acceptsFeedback, selectedProjectId],
   );
 
   const handleHireSubmit = useCallback(
     async (memberId: string) => {
       if (!selectedProjectId) return;
+      if (hasSubmittedProjectAction('contact', selectedProjectId)) {
+        setToast('이미 채용 의사를 전달했습니다');
+        setServiceVisited(true);
+        goToServiceIntro();
+        return;
+      }
       try {
         await createRecruiterContact(
           selectedProjectId,
           memberId,
           loadBusinessCard(),
         );
+        markProjectActionSubmitted('contact', selectedProjectId);
         setToast('채용 의사가 성공적으로 전달되었습니다');
       } catch (error) {
         if (!(error instanceof Error)) throw error;
@@ -169,6 +198,7 @@ function MainAppFlow() {
               setActionsEnabled(true);
               setServiceVisited(false);
               setToast(null);
+              setServiceIntroBackTarget('map');
               goToServiceIntro();
             }}
           />
@@ -178,12 +208,29 @@ function MainAppFlow() {
           <ServiceIntroPage
             projectId={selectedProjectId}
             actionsEnabled={actionsEnabled}
-            onBack={() => setPage(actionsEnabled ? 'map' : 'category-list')}
+            onBack={() => setPage(serviceIntroBackTarget)}
             onHire={() => setPage('hire')}
-            onFeedback={() => setPage('feedback')}
+            onFeedback={() => {
+              if (selectedProject?.acceptsFeedback === false) return;
+              setPage('feedback');
+            }}
             onProjectLoaded={handleProjectLoaded}
-            showGuide={!serviceVisited}
-            onGuideDismiss={() => setServiceVisited(true)}
+            showGuide={!serviceVisited && !guideDismissed}
+            onGuideDismiss={() => {
+              markOnboardingGuideDismissed();
+              setGuideDismissed(true);
+              setServiceVisited(true);
+            }}
+            feedbackSubmitted={
+              selectedProjectId
+                ? hasSubmittedProjectAction('feedback', selectedProjectId)
+                : false
+            }
+            contactSubmitted={
+              selectedProjectId
+                ? hasSubmittedProjectAction('contact', selectedProjectId)
+                : false
+            }
             toast={toast}
             onToastDismiss={() => setToast(null)}
           />
@@ -220,6 +267,7 @@ function MainAppFlow() {
               setActionsEnabled(false);
               setServiceVisited(true);
               setToast(null);
+              setServiceIntroBackTarget('category-list');
               goToServiceIntro();
             }}
           />

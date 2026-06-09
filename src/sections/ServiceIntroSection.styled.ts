@@ -23,19 +23,6 @@ export const ScrollArea = styled.div<{ $hasCta: boolean }>`
   }
 `;
 
-export const Banner = styled.div<{ $background: string }>`
-  margin-top: 16px;
-  width: 100%;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: ${({ $background }) => $background};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: 18px;
-  letter-spacing: 1px;
-`;
-
 export const Card = styled.div`
   margin: 24px ${({ theme }) => theme.layout.pagePadding} 0;
   border-radius: ${({ theme }) => theme.radius.lg};
@@ -43,8 +30,10 @@ export const Card = styled.div`
 
   img {
     width: 100%;
+    aspect-ratio: 342 / 246;
     height: auto;
     display: block;
+    object-fit: cover;
   }
 `;
 
@@ -52,25 +41,70 @@ export const TitleRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 14px;
   padding: 24px ${({ theme }) => theme.layout.pagePadding} 0;
+`;
+
+export const TitleText = styled.div`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+export const BoothCode = styled.span`
+  align-self: flex-start;
+  min-height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background-color: #fbdde3;
+  color: ${({ theme }) => theme.colors.primary};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0;
 `;
 
 export const ServiceName = styled.h2`
   font-size: 26px;
   line-height: 1.2;
   color: ${({ theme }) => theme.colors.black};
+  word-break: keep-all;
 `;
 
-export const LikeButton = styled.button`
+export const LikeButton = styled.button<{ $active: boolean }>`
+  flex: 0 0 auto;
   width: 36px;
   height: 36px;
   padding: 0;
   background: none;
   border: none;
+  color: ${({ theme, $active }) => ($active ? theme.colors.primary : '#b9b9b9')};
+  transition: transform 0.14s ease;
 
-  img {
-    width: 100%;
-    height: 100%;
+  &:active {
+    transform: scale(0.92);
+  }
+`;
+
+export const HeartIcon = styled.svg`
+  width: 100%;
+  height: 100%;
+  display: block;
+
+  path {
+    fill: ${({ theme }) => theme.colors.white};
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: fill 0.14s ease, stroke 0.14s ease;
+  }
+
+  ${LikeButton}[aria-pressed='true'] & path {
+    fill: currentColor;
   }
 `;
 
@@ -105,7 +139,7 @@ export const Tag = styled.li<TagProps>`
   justify-content: center;
   font-size: 10px;
   line-height: 1;
-  letter-spacing: 0.1px;
+  letter-spacing: 0;
   white-space: nowrap;
 `;
 
@@ -160,6 +194,12 @@ export const FeedbackButton = styled.button`
   &:active {
     filter: brightness(0.95);
   }
+
+  &:disabled {
+    cursor: default;
+    background-color: #c9c4dc;
+    filter: none;
+  }
 `;
 
 export const HireButton = styled.button`
@@ -177,5 +217,11 @@ export const HireButton = styled.button`
 
   &:active {
     filter: brightness(0.95);
+  }
+
+  &:disabled {
+    cursor: default;
+    background-color: #ef9ca6;
+    filter: none;
   }
 `;

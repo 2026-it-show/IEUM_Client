@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { API_BASE_URL } from '@/data';
 import type { BusinessCard } from '@/data';
+import { buildApiUrl } from './apiUrl';
 
 const stackGroupSchema = z.object({
   category: z.string(),
@@ -26,6 +27,7 @@ const projectSummarySchema = z.object({
   designStacks: z.array(z.string()),
   stackGroups: z.array(stackGroupSchema),
   featureDescriptions: z.array(featureDescriptionSchema),
+  acceptsFeedback: z.boolean().default(true),
   isPublished: z.boolean(),
   feedbackCount: z.number(),
   contactCount: z.number(),
@@ -72,6 +74,15 @@ export type IeumProjectSummary = z.infer<typeof projectSummarySchema>;
 export type IeumProjectDetail = z.infer<typeof projectDetailSchema>;
 export type IeumProjectMember = z.infer<typeof projectMemberSchema>;
 
+const FEEDBACK_DISABLED_BOOTH_SLOTS = new Set([
+  'A6',
+  'B3',
+  'C5',
+  'D5',
+  'D6',
+  'E2',
+]);
+
 export async function listProjectsByCategory(
   category: string,
 ): Promise<IeumProjectSummary[]> {
@@ -79,13 +90,14 @@ export async function listProjectsByCategory(
     `/projects?category=${encodeURIComponent(category)}&limit=80`,
     projectListSchema,
   );
-  return data.items;
+  return data.items.map(applyFeedbackPolicy);
 }
 
 export async function getProjectDetail(
   projectId: string,
 ): Promise<IeumProjectDetail> {
-  return requestData(`/projects/${projectId}`, projectDetailSchema);
+  const project = await requestData(`/projects/${projectId}`, projectDetailSchema);
+  return applyFeedbackPolicy(project);
 }
 
 export async function createFeedback(
@@ -139,7 +151,7 @@ async function requestData<TSchema extends z.ZodType>(
   const headers = new Headers(init?.headers);
   headers.set('Accept', 'application/json');
   headers.set('Content-Type', 'application/json');
-  const response = await fetch(new URL(path, API_BASE_URL), {
+  const response = await fetch(buildApiUrl(API_BASE_URL, path), {
     ...init,
     headers,
   });
@@ -157,4 +169,16 @@ function readErrorMessage(payload: unknown): string | null {
   return Array.isArray(parsed.data.message)
     ? parsed.data.message.join('\n')
     : parsed.data.message;
+}
+
+function applyFeedbackPolicy<TProject extends IeumProjectSummary>(
+  project: TProject,
+): TProject {
+  if (
+    project.boothSlot &&
+    FEEDBACK_DISABLED_BOOTH_SLOTS.has(project.boothSlot)
+  ) {
+    return { ...project, acceptsFeedback: false };
+  }
+  return project;
 }

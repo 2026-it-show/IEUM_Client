@@ -1,95 +1,50 @@
-import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
-
-const moveAndFadeOut = keyframes`
-  0% { left: 160px; opacity: 1; }
-  20% { left: 160px; opacity: 1; }
-  60% { left: 45px; opacity: 1; }
-  80% { left: 45px; opacity: 0; }
-  100% { left: 45px; opacity: 0; }
-`;
-
-const fadeIn = keyframes`
-  0% { opacity: 0; }
-  60% { opacity: 0; }
-  80% { opacity: 1; }
-  100% { opacity: 1; }
-`;
+import styled from 'styled-components';
 
 const PageWrapper = styled.div`
   width: 100%;
-  min-height: 100vh;
-  background-color: #ffffff;
+  height: 100%;
+  min-height: 100dvh;
+  background-color: #ec5665;
 `;
 
-const MobileContainer = styled.div<{ $isExiting: boolean }>`
-  width: 390px;
-  height: 844px;
-  background-color: #EC5665;
+const MobileContainer = styled.div`
+  --large-logo-width: min(76vw, 330px);
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  background-color: #ec5665;
   position: relative;
-  margin: 0 auto;
   overflow: hidden;
-  transition: opacity 0.5s ease-in-out;
-  opacity: ${({ $isExiting }) => ($isExiting ? 0 : 1)};
 `;
 
-const NavImage = styled.img`
-  width: 390px;
-  height: 48px;
+const SplashLogo = styled.img`
+  width: var(--large-logo-width);
+  height: auto;
   position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 10;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 `;
 
-const SmallLogo = styled.img`
-  width: 70px;
-  height: 70px;
-  position: absolute;
-  top: 391px;
-  animation: ${moveAndFadeOut} 2.5s ease-in-out forwards;
-`;
+function SplashScreen() {
+  const navigate = useNavigate();
 
-const LargeLogo = styled.img`
-  width: 300px;
-  height: 70px;
-  position: absolute;
-  top: 391px;
-  left: 45px;
-  animation: ${fadeIn} 2.5s ease-in-out forwards;
-`;
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      navigate('/survey/information');
+    }, 2600);
+    return () => window.clearTimeout(timeoutId);
+  }, [navigate]);
 
-const SplashScreen: React.FC = () => {
-    const navigate = useNavigate();
-    const [isExiting, setIsExiting] = useState(false);
-
-    const handleAnimationEnd = () => {
-        setIsExiting(true);
-        setTimeout(() => {
-            // 주소창을 /survey/information 으로 안전하게 이동시킵니다.
-            navigate('/survey/information');
-        }, 500);
-    };
-
-    return (
-        <PageWrapper>
-            <MobileContainer $isExiting={isExiting}>
-                {/* 1. 상단 Nav 이미지 */}
-                <NavImage src="/assets/nav.svg" alt="Navigation Bar" />
-
-                {/* 2. 작은 로고 */}
-                <SmallLogo src="/assets/logo_1.svg" alt="작은 로고" />
-
-                {/* 3. 큰 로고 (애니메이션이 완전히 끝나는 2.5초 시점에 handleAnimationEnd를 실행) */}
-                <LargeLogo
-                    src="/assets/logo_2.svg"
-                    alt="큰 로고"
-                    onAnimationEnd={handleAnimationEnd}
-                />
-            </MobileContainer>
-        </PageWrapper>
-    );
-};
+  return (
+    <PageWrapper>
+      <MobileContainer>
+        <SplashLogo src="/assets/figma/splash-logo.apng" alt="IEUM" />
+      </MobileContainer>
+    </PageWrapper>
+  );
+}
 
 export default SplashScreen;

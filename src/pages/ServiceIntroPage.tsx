@@ -9,6 +9,7 @@ import {
   getProjectDetail,
   type IeumProjectDetail,
 } from '@/api/ieumApi';
+import { EXPERIENCE_CATEGORIES } from '@/data';
 import * as S from './ServiceIntroPage.styled';
 
 interface ServiceIntroPageProps {
@@ -20,6 +21,8 @@ interface ServiceIntroPageProps {
   onProjectLoaded: (project: IeumProjectDetail) => void;
   showGuide: boolean;
   onGuideDismiss: () => void;
+  feedbackSubmitted: boolean;
+  contactSubmitted: boolean;
   toast?: string | null;
   onToastDismiss?: () => void;
 }
@@ -41,6 +44,8 @@ function ServiceIntroPage({
   onProjectLoaded,
   showGuide,
   onGuideDismiss,
+  feedbackSubmitted,
+  contactSubmitted,
   toast,
   onToastDismiss,
 }: ServiceIntroPageProps) {
@@ -52,6 +57,12 @@ function ServiceIntroPage({
     : loadState?.projectId === projectId
       ? loadState.status
       : 'loading';
+  const category = EXPERIENCE_CATEGORIES.find(
+    (item) => item.id === project?.experienceCategory,
+  );
+  const bandText = project
+    ? `${project.experienceCategory?.toUpperCase() ?? 'PROJECT'} EXPERIENCE`
+    : undefined;
 
   useEffect(() => {
     if (!projectId) {
@@ -75,13 +86,21 @@ function ServiceIntroPage({
 
   return (
     <S.Page>
-      <BackHeader title={project?.serviceName ?? '프로젝트'} onBack={onBack} />
+      <BackHeader
+        title={project?.serviceName ?? '프로젝트'}
+        onBack={onBack}
+        compact
+        bandText={bandText}
+        bandColor={category?.color}
+      />
       {project ? (
         <ServiceIntroSection
           project={project}
           actionsEnabled={actionsEnabled}
           onFeedback={onFeedback}
           onHire={onHire}
+          feedbackSubmitted={feedbackSubmitted}
+          contactSubmitted={contactSubmitted}
         />
       ) : (
         <S.StatusText>
@@ -91,13 +110,23 @@ function ServiceIntroPage({
         </S.StatusText>
       )}
       {actionsEnabled && showGuide && !toast && (
-        <PrototypeGuideOverlay onDismiss={onGuideDismiss} />
+        <PrototypeGuideOverlay
+          message={guideMessage(project)}
+          onDismiss={onGuideDismiss}
+        />
       )}
       {toast && onToastDismiss && (
         <SuccessToast message={toast} onDismiss={onToastDismiss} />
       )}
     </S.Page>
   );
+}
+
+function guideMessage(project: IeumProjectDetail | null): string {
+  if (project?.acceptsFeedback === false) {
+    return '프로젝트에 대한\n채용 의사를 밝힐 수 있습니다';
+  }
+  return '프로젝트에 대한 피드백을 남기거나\n채용 의사를 밝힐 수 있습니다';
 }
 
 export default ServiceIntroPage;

@@ -39,7 +39,12 @@ function CategoryListSection({
                 <S.Thumbnail>
                   <img src={project.thumbnail} alt={project.name} />
                 </S.Thumbnail>
-                <S.CardName>{project.name}</S.CardName>
+                <S.CardInfo>
+                  {project.boothSlot ? (
+                    <S.BoothCode>{project.boothSlot}</S.BoothCode>
+                  ) : null}
+                  <S.CardName>{project.name}</S.CardName>
+                </S.CardInfo>
               </S.Card>
             ))}
           </S.Grid>

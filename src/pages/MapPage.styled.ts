@@ -27,8 +27,8 @@ export const HeaderItem = styled.div`
 `;
 
 export const Logo = styled.img`
-  height: 22px;
-  width: auto;
+  width: 97px;
+  height: 20px;
 `;
 
 export const StopBadge = styled.span`
@@ -63,6 +63,16 @@ export const ImageGroup = styled.div`
   left: 0;
   transform-origin: 0 0;
   will-change: transform;
+`;
+
+export const EmptyBooth = styled.div<{ $color: string }>`
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  background: ${({ $color }) => $color};
+  pointer-events: none;
 `;
 
 /** Overlay layer for fixed-size pills (positioned in Stage screen space). */

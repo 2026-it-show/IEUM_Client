@@ -30,18 +30,9 @@ const MobileContainer = styled.div`
   box-sizing: border-box;
 `;
 
-const NavImage = styled.img`
-  width: 390px;
-  height: 48px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 10;
-`;
-
 const BackIcon = styled.img`
   position: absolute;
-  top: 65px;
+  top: 17px;
   left: 24px;
   width: 17px;
   height: 34px;
@@ -51,7 +42,7 @@ const BackIcon = styled.img`
 
 const ProgressBarContainer = styled.div`
   position: absolute;
-  top: 79px;
+  top: 31px;
   left: 57px;
   width: 309px;
   height: 6px;
@@ -70,7 +61,7 @@ const ProgressBarFill = styled.div<{ $width: number }>`
 
 const Title = styled.h1`
   position: absolute;
-  top: 112px;
+  top: 64px;
   left: 88px; 
   font-family: 'Gmarket Sans', sans-serif;
   font-size: 24px;
@@ -81,11 +72,11 @@ const Title = styled.h1`
 
 const OptionsContainer = styled.div`
   position: absolute;
-  top: 182px; 
+  top: 134px;
   left: 24px;
   display: flex;
   flex-direction: column;
-  gap: 12px; 
+  gap: 12px;
 `;
 
 const CardBox = styled.div<{ $isSelected: boolean }>`
@@ -149,8 +140,6 @@ const Gender: React.FC = () => {
   return (
     <PageWrapper>
       <MobileContainer>
-        <NavImage src="/assets/nav.svg" alt="Navigation Bar" />
-
         <BackIcon
           src="/assets/icons/back_icon.svg"
           alt="Back"
