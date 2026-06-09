@@ -14,6 +14,7 @@ import * as S from './ServiceIntroPage.styled';
 
 interface ServiceIntroPageProps {
   projectId: string | null;
+  isResolvingProject?: boolean;
   actionsEnabled: boolean;
   onBack: () => void;
   onHire: () => void;
@@ -37,6 +38,7 @@ interface ProjectLoadState {
 
 function ServiceIntroPage({
   projectId,
+  isResolvingProject = false,
   actionsEnabled,
   onBack,
   onHire,
@@ -52,7 +54,9 @@ function ServiceIntroPage({
   const [loadState, setLoadState] = useState<ProjectLoadState | null>(null);
   const project =
     loadState?.projectId === projectId ? loadState.project : null;
-  const status: LoadStatus = !projectId
+  const status: LoadStatus = isResolvingProject
+    ? 'loading'
+    : !projectId
     ? 'error'
     : loadState?.projectId === projectId
       ? loadState.status

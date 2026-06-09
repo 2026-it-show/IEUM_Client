@@ -1,5 +1,11 @@
-import { useCallback, useState } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useParams,
+} from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
 import { GlobalStyle, theme } from '@/styles';
 import {
@@ -11,7 +17,7 @@ import {
   QrScanPage,
   ServiceIntroPage,
 } from '@/pages';
-import type { ExperienceCategoryId } from '@/data';
+import { BOOTHS, type ExperienceCategoryId } from '@/data';
 import type { Booth } from '@/data';
 import {
   createFeedback,
@@ -61,23 +67,35 @@ function getInitialPageState(): {
   page: AppPage;
   cat: ExperienceCategoryId;
   projectId: string | null;
+  boothSlot: string | null;
   actionsEnabled: boolean;
 } {
   if (typeof window === 'undefined') {
-    return { page: 'map', cat: 'global', projectId: null, actionsEnabled: false };
+    return {
+      page: 'map',
+      cat: 'global',
+      projectId: null,
+      boothSlot: null,
+      actionsEnabled: false,
+    };
   }
   const params = new URLSearchParams(window.location.search);
   const pageParam = params.get('page');
   const catParam = params.get('cat') as ExperienceCategoryId | null;
+  const projectId = params.get('projectId');
+  const boothSlot = params.get('boothSlot');
   const page =
     pageParam && VALID_PAGES.has(pageParam as AppPage)
       ? (pageParam as AppPage)
+      : projectId || boothSlot
+        ? 'service-intro'
       : 'map';
   const cat = catParam ?? 'global';
   return {
     page,
     cat,
-    projectId: params.get('projectId'),
+    projectId,
+    boothSlot,
     actionsEnabled: params.get('actions') === '1',
   };
 }
@@ -101,6 +119,12 @@ function MainAppFlow() {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     initial.projectId,
   );
+  const [pendingBoothSlot, setPendingBoothSlot] = useState<string | null>(
+    initial.boothSlot,
+  );
+  const [isResolvingBooth, setIsResolvingBooth] = useState(
+    Boolean(initial.boothSlot && !initial.projectId),
+  );
   const [selectedProject, setSelectedProject] =
     useState<IeumProjectDetail | null>(null);
   const [serviceIntroBackTarget, setServiceIntroBackTarget] =
@@ -113,6 +137,62 @@ function MainAppFlow() {
   const handleProjectLoaded = useCallback((project: IeumProjectDetail) => {
     setSelectedProject(project);
   }, []);
+
+  useEffect(() => {
+    if (!pendingBoothSlot) return;
+
+    let active = true;
+    const normalizedSlot = pendingBoothSlot.trim().toUpperCase();
+    const booth = BOOTHS.find(
+      (item) =>
+        !item.aux &&
+        item.serviceName &&
+        item.title.toUpperCase() === normalizedSlot,
+    );
+
+    if (!booth) {
+      Promise.resolve().then(() => {
+        if (!active) return;
+        setIsResolvingBooth(false);
+        setPendingBoothSlot(null);
+        setPage('map');
+      });
+      return;
+    }
+
+    listProjectsByCategory(booth.categoryId)
+      .then((projects) => {
+        if (!active) return;
+        setSelectedCategory(booth.categoryId);
+        setSelectedProject(null);
+        setActionsEnabled(true);
+        setServiceVisited(false);
+        setServiceIntroBackTarget('map');
+        const project =
+          projects.find((item) => item.boothSlot === booth.title) ??
+          projects.find((item) => item.serviceName === booth.serviceName);
+        if (!project) {
+          setPage('category-list');
+          return;
+        }
+        setSelectedProjectId(project.id);
+        goToServiceIntro();
+      })
+      .catch((error: unknown) => {
+        if (!(error instanceof Error)) throw error;
+        if (!active) return;
+        setPage('category-list');
+      })
+      .finally(() => {
+        if (!active) return;
+        setPendingBoothSlot(null);
+        setIsResolvingBooth(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [goToServiceIntro, pendingBoothSlot]);
 
   const handleBoothPick = useCallback(
     async (booth: Booth) => {
@@ -213,6 +293,7 @@ function MainAppFlow() {
         return (
           <ServiceIntroPage
             projectId={selectedProjectId}
+            isResolvingProject={isResolvingBooth}
             actionsEnabled={actionsEnabled}
             onBack={() => setPage(serviceIntroBackTarget)}
             onHire={() => setPage('hire')}
@@ -301,6 +382,34 @@ function MainAppFlow() {
   return renderPage();
 }
 
+function ProjectEntryRoute() {
+  const { projectId } = useParams<{ projectId: string }>();
+  if (!projectId) {
+    return <Navigate to="/app" replace />;
+  }
+
+  return (
+    <Navigate
+      to={`/app?page=service-intro&projectId=${encodeURIComponent(projectId)}&actions=1`}
+      replace
+    />
+  );
+}
+
+function BoothEntryRoute() {
+  const { boothSlot } = useParams<{ boothSlot: string }>();
+  if (!boothSlot) {
+    return <Navigate to="/app" replace />;
+  }
+
+  return (
+    <Navigate
+      to={`/app?page=service-intro&boothSlot=${encodeURIComponent(boothSlot)}&actions=1`}
+      replace
+    />
+  );
+}
+
 const ROLE_LABELS: Record<string, string> = {
   backend: 'BE',
   frontend: 'FE',
@@ -328,6 +437,12 @@ function App() {
           <Route path="/survey/gender" element={<Gender />} />
           <Route path="/survey/purpose" element={<Purpose />} />
           <Route path="/business-card" element={<BusinessCardPage />} />
+          <Route path="/projects/:projectId" element={<ProjectEntryRoute />} />
+          <Route path="/project/:projectId" element={<ProjectEntryRoute />} />
+          <Route path="/p/:projectId" element={<ProjectEntryRoute />} />
+          <Route path="/booths/:boothSlot" element={<BoothEntryRoute />} />
+          <Route path="/booth/:boothSlot" element={<BoothEntryRoute />} />
+          <Route path="/b/:boothSlot" element={<BoothEntryRoute />} />
           <Route path="/app/*" element={<MainAppFlow />} />
         </Routes>
       </BrowserRouter>

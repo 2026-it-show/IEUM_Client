@@ -94,7 +94,9 @@ const CardBox = styled.div<{ $isSelected: boolean }>`
   width: 100%;
   height: clamp(76px, 10.8dvh, 91px);
   border-radius: 12px;
-  position: relative; 
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
   box-sizing: border-box;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
@@ -108,9 +110,6 @@ const CardTitle = styled.span`
   font-size: 20px;
   font-weight: 500;
   color: #222222;
-  position: absolute;
-  left: 28px;
-  top: 34px;
   line-height: 1;
 `;
 

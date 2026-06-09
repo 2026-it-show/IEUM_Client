@@ -482,14 +482,16 @@ function MapPage({
         </S.PillLayer>
       </S.Stage>
 
-      <S.QrFab type="button" onClick={onClickQr} aria-label="QR 스캔 열기">
-        <img
-          src="/assets/icons/qr_button_icon.svg"
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-        />
-      </S.QrFab>
+      {!showTutorial ? (
+        <S.QrFab type="button" onClick={onClickQr} aria-label="QR 스캔 열기">
+          <img
+            src="/assets/icons/qr_button_icon.svg"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+          />
+        </S.QrFab>
+      ) : null}
       {showTutorial && onTutorialDismiss ? (
         <MapTutorialOverlay onDismiss={onTutorialDismiss} />
       ) : null}
