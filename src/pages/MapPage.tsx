@@ -40,6 +40,7 @@ const PINCH_THRESHOLD_PX = 4;
 const NATURAL_MAP_W = FIGMA_MAP_SIZE.w;
 const NATURAL_MAP_H = FIGMA_MAP_SIZE.h;
 const MOBILE_INITIAL_TOP_OFFSET = 58;
+const MAP_HEADER_SAFE_TOP = 58;
 
 function getInitialScale(stageWidth: number, stageHeight: number): number {
   const widthScale = (stageWidth - 32) / NATURAL_MAP_W;
@@ -50,6 +51,34 @@ function getInitialScale(stageWidth: number, stageHeight: number): number {
 
 function getInitialTopOffset(stageWidth: number): number {
   return stageWidth <= 520 ? MOBILE_INITIAL_TOP_OFFSET : 0;
+}
+
+function getMapTopLimit(stageWidth: number): number {
+  return stageWidth <= 520 ? MAP_HEADER_SAFE_TOP : 48;
+}
+
+function clampMapTranslate(
+  s: number,
+  rawTx: number,
+  rawTy: number,
+  stageW: number,
+  stageH: number,
+  baseW: number,
+  baseH: number,
+): { readonly tx: number; readonly ty: number } {
+  const dispW = baseW * s;
+  const dispH = baseH * s;
+  const maxTop = getMapTopLimit(stageW);
+
+  const minTx = Math.min(0, stageW - dispW);
+  const maxTx = Math.max(0, stageW - dispW);
+  const minTy = Math.min(0, stageH - dispH);
+  const maxTy = Math.max(maxTop, stageH - dispH);
+
+  return {
+    tx: Math.min(Math.max(rawTx, minTx), maxTx),
+    ty: Math.min(Math.max(rawTy, minTy), maxTy),
+  };
 }
 
 function tileStyle(item: {
@@ -114,20 +143,15 @@ function MapPage({ onClickQr, onPickCategory, onPickBooth }: MapPageProps) {
 
   const clampTranslate = useCallback(
     (s: number, rawTx: number, rawTy: number) => {
-      const dispW = baseSize.w * s;
-      const dispH = baseSize.h * s;
-      const stageW = stageSize.w;
-      const stageH = stageSize.h;
-
-      const minTx = Math.min(0, stageW - dispW);
-      const maxTx = Math.max(0, stageW - dispW);
-      const minTy = Math.min(0, stageH - dispH);
-      const maxTy = Math.max(0, stageH - dispH);
-
-      return {
-        tx: Math.min(Math.max(rawTx, minTx), maxTx),
-        ty: Math.min(Math.max(rawTy, minTy), maxTy),
-      };
+      return clampMapTranslate(
+        s,
+        rawTx,
+        rawTy,
+        stageSize.w,
+        stageSize.h,
+        baseSize.w,
+        baseSize.h,
+      );
     },
     [baseSize, stageSize],
   );
@@ -168,11 +192,29 @@ function MapPage({ onClickQr, onPickCategory, onPickBooth }: MapPageProps) {
       : getInitialScale(rect.width, rect.height);
     setScale(initialScale);
     if (focal) {
-      setTx(rect.width / 2 - focal.x * baseW * initialScale);
-      setTy(rect.height / 2 - focal.y * baseH * initialScale);
+      const positioned = clampMapTranslate(
+        initialScale,
+        rect.width / 2 - focal.x * baseW * initialScale,
+        rect.height / 2 - focal.y * baseH * initialScale,
+        rect.width,
+        rect.height,
+        baseW,
+        baseH,
+      );
+      setTx(positioned.tx);
+      setTy(positioned.ty);
     } else {
-      setTx((rect.width - baseW * initialScale) / 2);
-      setTy(getInitialTopOffset(rect.width));
+      const positioned = clampMapTranslate(
+        initialScale,
+        (rect.width - baseW * initialScale) / 2,
+        getInitialTopOffset(rect.width),
+        rect.width,
+        rect.height,
+        baseW,
+        baseH,
+      );
+      setTx(positioned.tx);
+      setTy(positioned.ty);
     }
   }, []);
 
