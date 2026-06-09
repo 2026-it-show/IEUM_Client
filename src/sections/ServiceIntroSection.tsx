@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import type { IeumProjectDetail } from '@/api/ieumApi';
+import {
+  markProjectInterest,
+  type IeumProjectDetail,
+} from '@/api/ieumApi';
 import {
   loadProjectInterest,
   saveProjectInterest,
@@ -26,18 +29,27 @@ function ServiceIntroSection({
   const [interestState, setInterestState] = useState(() => ({
     projectId: project.id,
     interested: loadProjectInterest(project.id),
+    saving: false,
   }));
   const interested =
     interestState.projectId === project.id
       ? interestState.interested
       : loadProjectInterest(project.id);
+  const saving =
+    interestState.projectId === project.id ? interestState.saving : false;
   const thumbnail =
     project.thumbnailUrl ?? project.thumbnailPath ?? '/assets/image/growvy.png';
 
-  const handleInterestToggle = () => {
-    const nextInterested = !interested;
-    setInterestState({ projectId: project.id, interested: nextInterested });
-    saveProjectInterest(project.id, nextInterested);
+  const handleInterestToggle = async () => {
+    if (interested || saving) return;
+    setInterestState({ projectId: project.id, interested: false, saving: true });
+    try {
+      await markProjectInterest(project.id);
+      saveProjectInterest(project.id, true);
+      setInterestState({ projectId: project.id, interested: true, saving: false });
+    } catch {
+      setInterestState({ projectId: project.id, interested: false, saving: false });
+    }
   };
 
   return (
@@ -56,6 +68,7 @@ function ServiceIntroSection({
             aria-label="관심 프로젝트"
             aria-pressed={interested}
             $active={interested}
+            disabled={saving}
             onClick={handleInterestToggle}
           >
             <S.HeartIcon

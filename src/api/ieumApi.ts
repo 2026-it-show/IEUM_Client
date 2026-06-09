@@ -63,6 +63,12 @@ const feedbackSchema = z.object({
   id: z.string(),
 });
 
+const projectInterestSchema = z.object({
+  projectId: z.string(),
+  interestCount: z.number(),
+  alreadyInterested: z.boolean(),
+});
+
 const apiResponseSchema = z.object({
   statusCode: z.number(),
   data: z.unknown(),
@@ -73,6 +79,7 @@ const apiResponseSchema = z.object({
 export type IeumProjectSummary = z.infer<typeof projectSummarySchema>;
 export type IeumProjectDetail = z.infer<typeof projectDetailSchema>;
 export type IeumProjectMember = z.infer<typeof projectMemberSchema>;
+export type IeumProjectInterest = z.infer<typeof projectInterestSchema>;
 
 interface ProjectListCacheEntry {
   readonly expiresAt: number;
@@ -119,6 +126,14 @@ export async function getProjectDetail(
 ): Promise<IeumProjectDetail> {
   const project = await requestData(`/projects/${projectId}`, projectDetailSchema);
   return applyFeedbackPolicy(project);
+}
+
+export async function markProjectInterest(
+  projectId: string,
+): Promise<IeumProjectInterest> {
+  return requestData(`/projects/${projectId}/interests`, projectInterestSchema, {
+    method: 'POST',
+  });
 }
 
 export async function createFeedback(
