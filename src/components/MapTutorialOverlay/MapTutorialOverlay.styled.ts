@@ -4,77 +4,82 @@ export const Overlay = styled.div`
   position: absolute;
   inset: 0;
   z-index: 8;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.2) 0%,
-    rgba(0, 0, 0, 0.08) 28%,
-    rgba(0, 0, 0, 0.1) 66%,
-    rgba(0, 0, 0, 0.22) 100%
-  );
+  background: rgba(0, 0, 0, 0.72);
   color: ${({ theme }) => theme.colors.white};
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
 `;
 
-export const TopHint = styled.div`
+export const PinchGuide = styled.div`
   position: absolute;
-  top: 104px;
-  left: 24px;
-  right: 24px;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-`;
-
-export const QrHint = styled.div`
-  position: absolute;
-  right: 16px;
-  bottom: 88px;
-  width: 210px;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
+  align-items: center;
   pointer-events: none;
 `;
 
-export const HintText = styled.p`
-  max-width: 250px;
+export const PinchIcon = styled.img`
+  position: absolute;
+  top: 46.33%;
+  left: 50%;
+  width: 43px;
+  height: 43px;
+  transform: translateX(-50%);
+`;
+
+export const CenterCaption = styled.p`
+  position: absolute;
+  top: calc(46.33% + 62px);
+  left: 50%;
+  transform: translateX(-50%);
   margin: 0;
-  padding: 10px 14px;
-  border-radius: 999px;
-  background: rgba(34, 34, 34, 0.72);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  line-height: 1.45;
+  line-height: 1.5;
+  text-align: center;
+  word-break: keep-all;
+  white-space: nowrap;
+`;
+
+export const QrCaption = styled.p`
+  position: absolute;
+  right: 28px;
+  bottom: 121px;
+  width: min(293px, calc(100% - 56px));
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
   text-align: center;
   word-break: keep-all;
 `;
 
-export const Arrow = styled.svg`
-  width: 68px;
-  height: 58px;
-  margin-right: 22px;
+export const QrArrow = styled.img`
+  position: absolute;
+  right: 58px;
+  bottom: 33px;
+  width: 35px;
+  height: 36px;
+  pointer-events: none;
 `;
 
-export const DismissChip = styled.span`
+export const QrSpot = styled.div`
   position: absolute;
-  left: 50%;
-  bottom: 28px;
-  transform: translateX(-50%);
+  right: 31px;
+  bottom: 31px;
+  width: 55px;
+  height: 50px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 132px;
-  height: 40px;
-  padding: 0 18px;
   border-radius: 999px;
-  background: ${({ theme }) => theme.colors.primary};
-  box-shadow: 0 8px 24px rgba(236, 86, 101, 0.28);
-  font-size: 14px;
+  background: #4e3e85;
+  color: ${({ theme }) => theme.colors.white};
+  font-size: 20px;
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.5;
   pointer-events: none;
+  filter: drop-shadow(0 4px 14px rgba(78, 62, 133, 0.55));
 `;

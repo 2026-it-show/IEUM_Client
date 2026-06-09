@@ -101,8 +101,8 @@ export const PillLayer = styled.div`
 
 export const QrFab = styled.button`
   position: absolute;
-  right: 16px;
-  bottom: 24px;
+  right: 31px;
+  bottom: 31px;
   z-index: 6;
   width: 55px;
   height: 50px;

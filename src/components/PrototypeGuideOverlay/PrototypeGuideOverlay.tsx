@@ -2,11 +2,13 @@ import * as S from './PrototypeGuideOverlay.styled';
 
 interface PrototypeGuideOverlayProps {
   message?: string;
+  showFeedback?: boolean;
   onDismiss: () => void;
 }
 
 function PrototypeGuideOverlay({
   message = '프로젝트에 대한 피드백을 남기거나\n채용 의사를 밝힐 수 있습니다',
+  showFeedback = true,
   onDismiss,
 }: PrototypeGuideOverlayProps) {
   return (
@@ -22,29 +24,16 @@ function PrototypeGuideOverlay({
       <S.Anchor>
         <S.Caption>{message}</S.Caption>
         <S.Arrow
-          viewBox="0 0 70 60"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
+          src="/assets/icons/tutorial_arrow.svg"
+          alt=""
           aria-hidden="true"
-        >
-          <path
-            d="M15 12 C 25 18, 45 30, 58 56"
-            stroke="#FFFFFF"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            strokeDasharray="3 4"
-            fill="none"
-          />
-          <path
-            d="M8 14 L 15 6 L 22 14"
-            stroke="#FFFFFF"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-        </S.Arrow>
+          draggable={false}
+        />
       </S.Anchor>
+      <S.ActionRow $single={!showFeedback}>
+        {showFeedback ? <S.FeedbackButton>피드백</S.FeedbackButton> : null}
+        <S.HireButton>채용</S.HireButton>
+      </S.ActionRow>
     </S.Overlay>
   );
 }

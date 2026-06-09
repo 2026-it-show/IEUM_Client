@@ -112,6 +112,7 @@ function ServiceIntroPage({
       {actionsEnabled && showGuide && !toast && (
         <PrototypeGuideOverlay
           message={guideMessage(project)}
+          showFeedback={project?.acceptsFeedback !== false}
           onDismiss={onGuideDismiss}
         />
       )}

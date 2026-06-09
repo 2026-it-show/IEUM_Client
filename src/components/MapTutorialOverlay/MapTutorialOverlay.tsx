@@ -1,48 +1,62 @@
+import { useState } from 'react';
 import * as S from './MapTutorialOverlay.styled';
 
 interface MapTutorialOverlayProps {
   onDismiss: () => void;
 }
 
+type TutorialStep = 'pinch' | 'qr';
+
 function MapTutorialOverlay({ onDismiss }: MapTutorialOverlayProps) {
+  const [step, setStep] = useState<TutorialStep>('pinch');
+  const advance = () => {
+    if (step === 'pinch') {
+      setStep('qr');
+      return;
+    }
+    onDismiss();
+  };
+
   return (
     <S.Overlay
       role="button"
       tabIndex={0}
       aria-label="튜토리얼 닫기"
-      onClick={onDismiss}
+      onClick={advance}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') onDismiss();
+        if (e.key === 'Enter' || e.key === ' ') advance();
       }}
     >
-      <S.TopHint>
-        <S.HintText>관심 있는 분야나 부스를 눌러 프로젝트를 확인해보세요</S.HintText>
-      </S.TopHint>
-      <S.QrHint>
-        <S.Arrow
-          viewBox="0 0 68 58"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true"
-        >
-          <path
-            d="M8 8 C 20 17, 43 32, 56 51"
-            stroke="white"
-            strokeLinecap="round"
-            strokeDasharray="3 4"
-            strokeWidth="1.6"
+      {step === 'pinch' ? (
+        <S.PinchGuide>
+          <S.PinchIcon
+            src="/assets/icons/tutorial_pinch_icon.svg"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
           />
-          <path
-            d="M3 15 L 8 7 L 17 10"
-            stroke="white"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.6"
+          <S.CenterCaption>
+            두 손가락으로 확대를 하여
+            <br />
+            지도를 볼 수 있습니다
+          </S.CenterCaption>
+        </S.PinchGuide>
+      ) : (
+        <>
+          <S.QrCaption>
+            각 부스에 설치된 NFC를 태그 하시거나 QR을 인식하여
+            <br />
+            프로젝트에 대한 정보를 얻을 수 있습니다
+          </S.QrCaption>
+          <S.QrArrow
+            src="/assets/icons/tutorial_arrow.svg"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
           />
-        </S.Arrow>
-        <S.HintText>부스에서 QR을 찍으면 피드백과 채용 의사를 남길 수 있습니다</S.HintText>
-      </S.QrHint>
-      <S.DismissChip>화면을 눌러 시작</S.DismissChip>
+          <S.QrSpot aria-hidden="true">QR</S.QrSpot>
+        </>
+      )}
     </S.Overlay>
   );
 }
