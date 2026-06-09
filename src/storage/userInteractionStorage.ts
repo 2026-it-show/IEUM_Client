@@ -1,4 +1,5 @@
 const GUIDE_DISMISSED_KEY = 'ieum.onboardingGuide.dismissed';
+const MAP_TUTORIAL_DISMISSED_KEY = 'ieum.mapTutorial.dismissed';
 
 type SubmissionKind = 'feedback' | 'contact';
 
@@ -52,6 +53,14 @@ export function hasDismissedOnboardingGuide(): boolean {
 
 export function markOnboardingGuideDismissed(): void {
   writeFlag(GUIDE_DISMISSED_KEY, true);
+}
+
+export function hasDismissedMapTutorial(): boolean {
+  return readFlag(MAP_TUTORIAL_DISMISSED_KEY);
+}
+
+export function markMapTutorialDismissed(): void {
+  writeFlag(MAP_TUTORIAL_DISMISSED_KEY, true);
 }
 
 export function loadProjectInterest(projectId: string): boolean {

@@ -24,6 +24,7 @@ import {
   CategoryPillButton,
   CategoryTileButton,
   MapCanvas,
+  MapTutorialOverlay,
 } from '@/components';
 import * as S from './MapPage.styled';
 
@@ -31,6 +32,8 @@ interface MapPageProps {
   onClickQr: () => void;
   onPickCategory: (categoryId: ExperienceCategoryId) => void;
   onPickBooth: (booth: Booth) => void;
+  showTutorial?: boolean;
+  onTutorialDismiss?: () => void;
 }
 
 const MIN_SCALE = 0.25;
@@ -112,7 +115,13 @@ interface ActivePointer {
   y: number;
 }
 
-function MapPage({ onClickQr, onPickCategory, onPickBooth }: MapPageProps) {
+function MapPage({
+  onClickQr,
+  onPickCategory,
+  onPickBooth,
+  showTutorial = false,
+  onTutorialDismiss,
+}: MapPageProps) {
   const stageRef = useRef<HTMLDivElement>(null);
 
   const [stageSize, setStageSize] = useState({ w: 0, h: 0 });
@@ -481,6 +490,9 @@ function MapPage({ onClickQr, onPickCategory, onPickBooth }: MapPageProps) {
           draggable={false}
         />
       </S.QrFab>
+      {showTutorial && onTutorialDismiss ? (
+        <MapTutorialOverlay onDismiss={onTutorialDismiss} />
+      ) : null}
     </S.Page>
   );
 }

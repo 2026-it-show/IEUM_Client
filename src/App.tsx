@@ -21,8 +21,10 @@ import {
 } from '@/api/ieumApi';
 import { loadBusinessCard } from '@/storage/businessCardStorage';
 import {
+  hasDismissedMapTutorial,
   hasDismissedOnboardingGuide,
   hasSubmittedProjectAction,
+  markMapTutorialDismissed,
   markOnboardingGuideDismissed,
   markProjectActionSubmitted,
 } from '@/storage/userInteractionStorage';
@@ -83,11 +85,15 @@ function getInitialPageState(): {
 function MainAppFlow() {
   const initial = getInitialPageState();
   const initialGuideDismissed = hasDismissedOnboardingGuide();
+  const initialMapTutorialDismissed = hasDismissedMapTutorial();
   const [page, setPage] = useState<AppPage>(initial.page);
   const [serviceVisited, setServiceVisited] = useState(
     !initial.actionsEnabled || initialGuideDismissed,
   );
   const [guideDismissed, setGuideDismissed] = useState(initialGuideDismissed);
+  const [mapTutorialDismissed, setMapTutorialDismissed] = useState(
+    initialMapTutorialDismissed,
+  );
   const [actionsEnabled, setActionsEnabled] = useState(initial.actionsEnabled);
   const [toast, setToast] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] =
@@ -281,6 +287,11 @@ function MainAppFlow() {
             onPickCategory={(categoryId) => {
               setSelectedCategory(categoryId);
               setPage('category-list');
+            }}
+            showTutorial={!mapTutorialDismissed}
+            onTutorialDismiss={() => {
+              markMapTutorialDismissed();
+              setMapTutorialDismissed(true);
             }}
           />
         );
