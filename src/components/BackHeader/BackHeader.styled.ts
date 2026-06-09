@@ -15,9 +15,8 @@ const resolveColor = (
 export const Header = styled.header<{ $compact: boolean }>`
   display: flex;
   align-items: center;
-  min-height: 45px;
-  padding: ${({ $compact }) => ($compact ? '17px' : '17px')}
-    ${({ theme }) => theme.layout.pagePadding} 0;
+  min-height: ${({ $compact }) => ($compact ? '80px' : '62px')};
+  padding: 0 ${({ theme }) => theme.layout.pagePadding};
   flex-shrink: 0;
 `;
 
@@ -58,8 +57,8 @@ export const Band = styled.div<{ $background: string }>`
   align-items: center;
   justify-content: center;
   background-color: ${({ $background }) => $background};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: 18px;
+  color: ${({ theme }) => theme.colors.black};
+  font-size: 22px;
   line-height: 1;
   letter-spacing: 0;
 `;

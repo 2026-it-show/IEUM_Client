@@ -24,8 +24,8 @@ export const ScrollArea = styled.div<{ $hasCta: boolean }>`
 `;
 
 export const Card = styled.div`
-  margin: 24px ${({ theme }) => theme.layout.pagePadding} 0;
-  border-radius: ${({ theme }) => theme.radius.lg};
+  margin: 27px 20px 0;
+  border-radius: 14px;
   overflow: hidden;
 
   img {
@@ -42,7 +42,7 @@ export const TitleRow = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  padding: 24px ${({ theme }) => theme.layout.pagePadding} 0;
+  padding: 24px 20px 0;
 `;
 
 export const TitleText = styled.div`
@@ -109,7 +109,7 @@ export const HeartIcon = styled.svg`
 `;
 
 export const Description = styled.p`
-  padding: 10px ${({ theme }) => theme.layout.pagePadding} 0;
+  padding: 10px 20px 0;
   font-size: 14px;
   line-height: 1.5;
   color: #4b4b4b;
@@ -120,7 +120,7 @@ export const TagList = styled.ul`
   display: flex;
   flex-wrap: wrap;
   gap: 10px 9px;
-  padding: 18px ${({ theme }) => theme.layout.pagePadding} 0;
+  padding: 18px 20px 0;
 `;
 
 interface TagProps {
@@ -147,7 +147,7 @@ export const DetailList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 6px ${({ theme }) => theme.layout.pagePadding} 24px;
+  padding: 24px 20px 24px;
 `;
 
 export const DetailBlock = styled.section`

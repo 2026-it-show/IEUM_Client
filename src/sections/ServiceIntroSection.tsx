@@ -49,9 +49,6 @@ function ServiceIntroSection({
 
         <S.TitleRow>
           <S.TitleText>
-            {project.boothSlot ? (
-              <S.BoothCode>{project.boothSlot}</S.BoothCode>
-            ) : null}
             <S.ServiceName>{project.serviceName}</S.ServiceName>
           </S.TitleText>
           <S.LikeButton
