@@ -8,6 +8,17 @@ export const Page = styled.div`
   min-height: 100%;
   background-color: #ffffff;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+
+  * {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  img {
+    -webkit-user-drag: none;
+  }
 `;
 
 export const Header = styled.header`
@@ -29,6 +40,7 @@ export const HeaderItem = styled.div`
 export const Logo = styled.img`
   width: 97px;
   height: 20px;
+  pointer-events: none;
 `;
 
 export const StopBadge = styled.span`

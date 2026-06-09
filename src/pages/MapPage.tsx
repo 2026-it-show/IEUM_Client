@@ -393,7 +393,11 @@ function MapPage({ onClickQr, onPickCategory, onPickBooth }: MapPageProps) {
   return (
     <S.Page>
       <S.Header>
-        <S.Logo src="/assets/brand/ieum-client-header-logo.svg" alt="I.EUM" />
+        <S.Logo
+          src="/assets/brand/ieum-client-header-logo.svg"
+          alt="I.EUM"
+          draggable={false}
+        />
         <S.StopBadge>관람중단</S.StopBadge>
       </S.Header>
 
@@ -470,7 +474,12 @@ function MapPage({ onClickQr, onPickCategory, onPickBooth }: MapPageProps) {
       </S.Stage>
 
       <S.QrFab type="button" onClick={onClickQr} aria-label="QR 스캔 열기">
-        <img src="/assets/icons/qr_button_icon.svg" alt="" aria-hidden="true" />
+        <img
+          src="/assets/icons/qr_button_icon.svg"
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+        />
       </S.QrFab>
     </S.Page>
   );
