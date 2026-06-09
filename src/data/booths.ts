@@ -3,7 +3,10 @@ import type { ExperienceCategoryId } from './types';
 export interface Booth { readonly id: string; readonly title: string; readonly serviceName: string; readonly categoryId: ExperienceCategoryId; readonly color: string; readonly x: number; readonly y: number; readonly w: number; readonly h: number; readonly aux?: boolean; readonly labelOffsetY?: number; }
 
 const COLOR = { global: '#D88E70', ai: '#2B92D0', human: '#F399BE', network: '#F4827E', personal: '#23B575', creative: '#F9C96B', journey: '#C797C5' } as const;
-const OUTER_RIGHT_AUX_X = 0.920000;
+const OUTER_RIGHT_AUX_X = 0.913691;
+const NETWORK_RIGHT_AUX_X = 0.750744;
+const JOURNEY_STACK_X = 0.745164;
+const JOURNEY_BOTTOM_AUX_Y = 0.942872;
 
 export const BOOTHS: readonly Booth[] = [
   // ai
@@ -60,17 +63,17 @@ export const BOOTHS: readonly Booth[] = [
   { id:"network-empty-1", title:"network-empty-1", serviceName:"", categoryId:"network", color:COLOR.network, x:0.577381, y:0.419811, w:0.048363, h:0.034067, aux:true },
   { id:"network-empty-2", title:"network-empty-2", serviceName:"", categoryId:"network", color:COLOR.network, x:0.479167, y:0.031971, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-3", title:"network-empty-3", serviceName:"", categoryId:"network", color:COLOR.network, x:0.587054, y:0.031971, w:0.019345, h:0.013627, aux:true },
-  { id:"network-empty-4", title:"network-empty-4", serviceName:"", categoryId:"network", color:COLOR.network, x:0.760417, y:0.375262, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-4", title:"network-empty-4", serviceName:"", categoryId:"network", color:COLOR.network, x:NETWORK_RIGHT_AUX_X, y:0.375262, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-5", title:"network-empty-5", serviceName:"", categoryId:"network", color:COLOR.network, x:0.721726, y:0.281971, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-6", title:"network-empty-6", serviceName:"", categoryId:"network", color:COLOR.network, x:0.721726, y:0.215933, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-7", title:"network-empty-7", serviceName:"", categoryId:"network", color:COLOR.network, x:0.458333, y:0.031971, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-8", title:"network-empty-8", serviceName:"", categoryId:"network", color:COLOR.network, x:0.566220, y:0.031971, w:0.019345, h:0.013627, aux:true },
-  { id:"network-empty-9", title:"network-empty-9", serviceName:"", categoryId:"network", color:COLOR.network, x:0.760417, y:0.360587, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-9", title:"network-empty-9", serviceName:"", categoryId:"network", color:COLOR.network, x:NETWORK_RIGHT_AUX_X, y:0.360587, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-10", title:"network-empty-10", serviceName:"", categoryId:"network", color:COLOR.network, x:0.721726, y:0.267296, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-11", title:"network-empty-11", serviceName:"", categoryId:"network", color:COLOR.network, x:0.721726, y:0.201258, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-12", title:"network-empty-12", serviceName:"", categoryId:"network", color:COLOR.network, x:0.437500, y:0.031971, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-13", title:"network-empty-13", serviceName:"", categoryId:"network", color:COLOR.network, x:0.545387, y:0.031971, w:0.019345, h:0.013627, aux:true },
-  { id:"network-empty-14", title:"network-empty-14", serviceName:"", categoryId:"network", color:COLOR.network, x:0.760417, y:0.345912, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-14", title:"network-empty-14", serviceName:"", categoryId:"network", color:COLOR.network, x:NETWORK_RIGHT_AUX_X, y:0.345912, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-15", title:"network-empty-15", serviceName:"", categoryId:"network", color:COLOR.network, x:0.721726, y:0.252621, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-16", title:"network-empty-16", serviceName:"", categoryId:"network", color:COLOR.network, x:0.721726, y:0.186583, w:0.019345, h:0.013627, aux:true },
   // personal
@@ -123,26 +126,26 @@ export const BOOTHS: readonly Booth[] = [
   { id:"creative-empty-18", title:"creative-empty-18", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.685268, y:0.576520, w:0.019345, h:0.013627, aux:true },
   { id:"creative-empty-19", title:"creative-empty-19", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.604911, y:0.592243, w:0.048363, h:0.034067, aux:true },
   // journey
-  { id:"F6", title:"F6", serviceName:"Mirim OAuth", categoryId:"journey", color:COLOR.journey, x:0.781994, y:0.744759, w:0.039435, h:0.034067 },
-  { id:"F5", title:"F5", serviceName:"Plank", categoryId:"journey", color:COLOR.journey, x:0.781994, y:0.780398, w:0.039435, h:0.034067 },
-  { id:"F4", title:"F4", serviceName:"체크잇", categoryId:"journey", color:COLOR.journey, x:0.781994, y:0.816038, w:0.039435, h:0.034067 },
-  { id:"F3", title:"F3", serviceName:"Artifact", categoryId:"journey", color:COLOR.journey, x:0.781994, y:0.851677, w:0.039435, h:0.034067 },
-  { id:"F2", title:"F2", serviceName:"시장여지도", categoryId:"journey", color:COLOR.journey, x:0.781994, y:0.887317, w:0.039435, h:0.034067 },
-  { id:"F1", title:"F1", serviceName:"WIP", categoryId:"journey", color:COLOR.journey, x:0.781994, y:0.922956, w:0.039435, h:0.034067 },
-  { id:"journey-empty-1", title:"journey-empty-1", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.773065, y:0.955975, w:0.019345, h:0.013627, aux:true },
-  { id:"journey-empty-2", title:"journey-empty-2", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.869048, y:0.955975, w:0.019345, h:0.013627, aux:true },
+  { id:"F6", title:"F6", serviceName:"Mirim OAuth", categoryId:"journey", color:COLOR.journey, x:JOURNEY_STACK_X, y:0.744759, w:0.039435, h:0.034067 },
+  { id:"F5", title:"F5", serviceName:"Plank", categoryId:"journey", color:COLOR.journey, x:JOURNEY_STACK_X, y:0.780398, w:0.039435, h:0.034067 },
+  { id:"F4", title:"F4", serviceName:"체크잇", categoryId:"journey", color:COLOR.journey, x:JOURNEY_STACK_X, y:0.816038, w:0.039435, h:0.034067 },
+  { id:"F3", title:"F3", serviceName:"Artifact", categoryId:"journey", color:COLOR.journey, x:JOURNEY_STACK_X, y:0.851677, w:0.039435, h:0.034067 },
+  { id:"F2", title:"F2", serviceName:"시장여지도", categoryId:"journey", color:COLOR.journey, x:JOURNEY_STACK_X, y:0.887317, w:0.039435, h:0.034067 },
+  { id:"F1", title:"F1", serviceName:"WIP", categoryId:"journey", color:COLOR.journey, x:JOURNEY_STACK_X, y:0.922956, w:0.039435, h:0.034067 },
+  { id:"journey-empty-1", title:"journey-empty-1", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.773065, y:JOURNEY_BOTTOM_AUX_Y, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-2", title:"journey-empty-2", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.869048, y:JOURNEY_BOTTOM_AUX_Y, w:0.019345, h:0.013627, aux:true },
   { id:"journey-empty-3", title:"journey-empty-3", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.882075, w:0.019345, h:0.013627, aux:true },
   { id:"journey-empty-4", title:"journey-empty-4", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.742662, w:0.019345, h:0.013627, aux:true },
   { id:"journey-empty-5", title:"journey-empty-5", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.812369, w:0.019345, h:0.013627, aux:true },
   { id:"journey-empty-6", title:"journey-empty-6", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.672956, w:0.019345, h:0.013627, aux:true },
-  { id:"journey-empty-7", title:"journey-empty-7", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.793899, y:0.955975, w:0.019345, h:0.013627, aux:true },
-  { id:"journey-empty-8", title:"journey-empty-8", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.889881, y:0.955975, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-7", title:"journey-empty-7", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.793899, y:JOURNEY_BOTTOM_AUX_Y, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-8", title:"journey-empty-8", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.889881, y:JOURNEY_BOTTOM_AUX_Y, w:0.019345, h:0.013627, aux:true },
   { id:"journey-empty-9", title:"journey-empty-9", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.896751, w:0.019345, h:0.013627, aux:true },
   { id:"journey-empty-10", title:"journey-empty-10", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.757338, w:0.019345, h:0.013627, aux:true },
   { id:"journey-empty-11", title:"journey-empty-11", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.827044, w:0.019345, h:0.013627, aux:true },
   { id:"journey-empty-12", title:"journey-empty-12", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.687631, w:0.019345, h:0.013627, aux:true },
-  { id:"journey-empty-13", title:"journey-empty-13", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.814732, y:0.955975, w:0.019345, h:0.013627, aux:true },
-  { id:"journey-empty-14", title:"journey-empty-14", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.910714, y:0.955975, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-13", title:"journey-empty-13", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.814732, y:JOURNEY_BOTTOM_AUX_Y, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-14", title:"journey-empty-14", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.910714, y:JOURNEY_BOTTOM_AUX_Y, w:0.019345, h:0.013627, aux:true },
   { id:"journey-empty-15", title:"journey-empty-15", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.911426, w:0.019345, h:0.013627, aux:true },
   { id:"journey-empty-16", title:"journey-empty-16", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.772013, w:0.019345, h:0.013627, aux:true },
   { id:"journey-empty-17", title:"journey-empty-17", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.841719, w:0.019345, h:0.013627, aux:true },
