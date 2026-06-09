@@ -4,7 +4,6 @@ export interface Booth { readonly id: string; readonly title: string; readonly s
 
 const COLOR = { global: '#D88E70', ai: '#2B92D0', human: '#F399BE', network: '#F4827E', personal: '#23B575', creative: '#F9C96B', journey: '#C797C5' } as const;
 const OUTER_RIGHT_AUX_X = 0.901042;
-const NETWORK_RIGHT_AUX_X = 0.742560;
 const JOURNEY_STACK_X = 0.745164;
 const JOURNEY_BOTTOM_AUX_Y = 0.942872;
 
@@ -63,19 +62,19 @@ export const BOOTHS: readonly Booth[] = [
   { id:"network-empty-1", title:"network-empty-1", serviceName:"", categoryId:"network", color:COLOR.network, x:0.577381, y:0.419811, w:0.048363, h:0.034067, aux:true },
   { id:"network-empty-2", title:"network-empty-2", serviceName:"", categoryId:"network", color:COLOR.network, x:0.479167, y:0.031971, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-3", title:"network-empty-3", serviceName:"", categoryId:"network", color:COLOR.network, x:0.587054, y:0.031971, w:0.019345, h:0.013627, aux:true },
-  { id:"network-empty-4", title:"network-empty-4", serviceName:"", categoryId:"network", color:COLOR.network, x:NETWORK_RIGHT_AUX_X, y:0.375262, w:0.019345, h:0.013627, aux:true },
-  { id:"network-empty-5", title:"network-empty-5", serviceName:"", categoryId:"network", color:COLOR.network, x:0.721726, y:0.281971, w:0.019345, h:0.013627, aux:true },
-  { id:"network-empty-6", title:"network-empty-6", serviceName:"", categoryId:"network", color:COLOR.network, x:0.721726, y:0.215933, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-4", title:"network-empty-4", serviceName:"", categoryId:"network", color:COLOR.network, x:0.742560, y:0.375262, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-5", title:"network-empty-5", serviceName:"", categoryId:"network", color:COLOR.network, x:0.742560, y:0.281971, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-6", title:"network-empty-6", serviceName:"", categoryId:"network", color:COLOR.network, x:0.742560, y:0.215933, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-7", title:"network-empty-7", serviceName:"", categoryId:"network", color:COLOR.network, x:0.458333, y:0.031971, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-8", title:"network-empty-8", serviceName:"", categoryId:"network", color:COLOR.network, x:0.566220, y:0.031971, w:0.019345, h:0.013627, aux:true },
-  { id:"network-empty-9", title:"network-empty-9", serviceName:"", categoryId:"network", color:COLOR.network, x:NETWORK_RIGHT_AUX_X, y:0.360587, w:0.019345, h:0.013627, aux:true },
-  { id:"network-empty-10", title:"network-empty-10", serviceName:"", categoryId:"network", color:COLOR.network, x:0.721726, y:0.267296, w:0.019345, h:0.013627, aux:true },
-  { id:"network-empty-11", title:"network-empty-11", serviceName:"", categoryId:"network", color:COLOR.network, x:0.721726, y:0.201258, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-9", title:"network-empty-9", serviceName:"", categoryId:"network", color:COLOR.network, x:0.742560, y:0.360587, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-10", title:"network-empty-10", serviceName:"", categoryId:"network", color:COLOR.network, x:0.742560, y:0.267296, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-11", title:"network-empty-11", serviceName:"", categoryId:"network", color:COLOR.network, x:0.742560, y:0.201258, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-12", title:"network-empty-12", serviceName:"", categoryId:"network", color:COLOR.network, x:0.437500, y:0.031971, w:0.019345, h:0.013627, aux:true },
   { id:"network-empty-13", title:"network-empty-13", serviceName:"", categoryId:"network", color:COLOR.network, x:0.545387, y:0.031971, w:0.019345, h:0.013627, aux:true },
-  { id:"network-empty-14", title:"network-empty-14", serviceName:"", categoryId:"network", color:COLOR.network, x:NETWORK_RIGHT_AUX_X, y:0.345912, w:0.019345, h:0.013627, aux:true },
-  { id:"network-empty-15", title:"network-empty-15", serviceName:"", categoryId:"network", color:COLOR.network, x:0.721726, y:0.252621, w:0.019345, h:0.013627, aux:true },
-  { id:"network-empty-16", title:"network-empty-16", serviceName:"", categoryId:"network", color:COLOR.network, x:0.721726, y:0.186583, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-14", title:"network-empty-14", serviceName:"", categoryId:"network", color:COLOR.network, x:0.742560, y:0.345912, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-15", title:"network-empty-15", serviceName:"", categoryId:"network", color:COLOR.network, x:0.742560, y:0.252621, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-16", title:"network-empty-16", serviceName:"", categoryId:"network", color:COLOR.network, x:0.742560, y:0.186583, w:0.019345, h:0.013627, aux:true },
   // personal
   { id:"D6", title:"D6", serviceName:"이상형.zip", categoryId:"personal", color:COLOR.personal, x:0.792411, y:0.177149, w:0.039435, h:0.034067 },
   { id:"D5", title:"D5", serviceName:"Mikura", categoryId:"personal", color:COLOR.personal, x:0.792411, y:0.212788, w:0.039435, h:0.034067 },
