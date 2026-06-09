@@ -25,7 +25,7 @@ import {
   listProjectsByCategory,
   type IeumProjectDetail,
 } from '@/api/ieumApi';
-import { loadBusinessCard } from '@/storage/businessCardStorage';
+import { loadSavedBusinessCard } from '@/storage/businessCardStorage';
 import {
   hasDismissedMapTutorial,
   hasDismissedOnboardingGuide,
@@ -72,6 +72,7 @@ function getInitialPageState(): {
   projectId: string | null;
   boothSlot: string | null;
   actionsEnabled: boolean;
+  forceGuide: boolean;
 } {
   if (typeof window === 'undefined') {
     return {
@@ -80,6 +81,7 @@ function getInitialPageState(): {
       projectId: null,
       boothSlot: null,
       actionsEnabled: false,
+      forceGuide: false,
     };
   }
   const params = new URLSearchParams(window.location.search);
@@ -100,16 +102,19 @@ function getInitialPageState(): {
     projectId,
     boothSlot,
     actionsEnabled: params.get('actions') === '1',
+    forceGuide: params.get('guide') === '1',
   };
 }
 
 function MainAppFlow() {
   const initial = getInitialPageState();
-  const initialGuideDismissed = hasDismissedOnboardingGuide();
+  const initialGuideDismissed = initial.forceGuide
+    ? false
+    : hasDismissedOnboardingGuide();
   const initialMapTutorialDismissed = hasDismissedMapTutorial();
   const [page, setPage] = useState<AppPage>(initial.page);
   const [serviceVisited, setServiceVisited] = useState(
-    !initial.actionsEnabled || initialGuideDismissed,
+    !initial.actionsEnabled || (!initial.forceGuide && initialGuideDismissed),
   );
   const [guideDismissed, setGuideDismissed] = useState(initialGuideDismissed);
   const [mapTutorialDismissed, setMapTutorialDismissed] = useState(
@@ -260,10 +265,12 @@ function MainAppFlow() {
         return;
       }
       try {
+        const savedBusinessCard = loadSavedBusinessCard();
         await createRecruiterContact(
           selectedProjectId,
           memberId,
-          loadBusinessCard(),
+          savedBusinessCard?.card ?? null,
+          savedBusinessCard?.visitorProfileId ?? null,
         );
         markProjectActionSubmitted('contact', selectedProjectId);
         setToast('채용 의사가 성공적으로 전달되었습니다');
@@ -283,12 +290,25 @@ function MainAppFlow() {
         return (
           <QrScanPage
             onBack={() => setPage('map')}
-            onScanned={() => {
+            onScanned={(payload) => {
+              const entry = parseQrPayload(payload);
               setActionsEnabled(true);
               setServiceVisited(false);
+              setGuideDismissed(false);
               setToast(null);
               setServiceIntroBackTarget('map');
-              goToServiceIntro();
+              if (entry.kind === 'project') {
+                setSelectedProjectId(entry.projectId);
+                setSelectedProject(null);
+                goToServiceIntro();
+                return;
+              }
+              if (entry.kind === 'booth') {
+                setPendingBoothSlot(entry.boothSlot);
+                setIsResolvingBooth(true);
+                return;
+              }
+              setToast('QR을 인식하지 못했습니다');
             }}
           />
         );
@@ -391,7 +411,7 @@ function ProjectEntryRoute() {
   if (!projectId) {
     return <Navigate to="/app" replace />;
   }
-  const target = `/app?page=service-intro&projectId=${encodeURIComponent(projectId)}&actions=1`;
+  const target = `/app?page=service-intro&projectId=${encodeURIComponent(projectId)}&actions=1&guide=1`;
   if (!hasCompletedInitialOnboarding()) {
     return <Navigate to={buildSurveyStartPath(target)} replace />;
   }
@@ -409,7 +429,7 @@ function BoothEntryRoute() {
   if (!boothSlot) {
     return <Navigate to="/app" replace />;
   }
-  const target = `/app?page=service-intro&boothSlot=${encodeURIComponent(boothSlot)}&actions=1`;
+  const target = `/app?page=service-intro&boothSlot=${encodeURIComponent(boothSlot)}&actions=1&guide=1`;
   if (!hasCompletedInitialOnboarding()) {
     return <Navigate to={buildSurveyStartPath(target)} replace />;
   }
@@ -433,6 +453,48 @@ const ROLE_LABELS: Record<string, string> = {
 function roleLabel(roles: string[]): string {
   const labels = roles.map((role) => ROLE_LABELS[role] ?? role);
   return labels.length ? labels.join(', ') : 'MEMBER';
+}
+
+type QrEntry =
+  | { readonly kind: 'project'; readonly projectId: string }
+  | { readonly kind: 'booth'; readonly boothSlot: string }
+  | { readonly kind: 'unknown' };
+
+function parseQrPayload(payload: string): QrEntry {
+  const trimmed = payload.trim();
+  if (!trimmed) return { kind: 'unknown' };
+  const parsedUrl = safeParseUrl(trimmed);
+  const projectId =
+    parsedUrl?.searchParams.get('projectId') ??
+    parsePathValue(parsedUrl?.pathname, ['projects', 'project', 'p']);
+  if (projectId) return { kind: 'project', projectId };
+  const boothSlot =
+    parsedUrl?.searchParams.get('boothSlot') ??
+    parsePathValue(parsedUrl?.pathname, ['booths', 'booth', 'b']);
+  if (boothSlot) return { kind: 'booth', boothSlot };
+  if (/^[A-G][1-9]$/i.test(trimmed)) {
+    return { kind: 'booth', boothSlot: trimmed.toUpperCase() };
+  }
+  return { kind: 'unknown' };
+}
+
+function safeParseUrl(value: string): URL | null {
+  try {
+    return new URL(value, window.location.origin);
+  } catch {
+    return null;
+  }
+}
+
+function parsePathValue(pathname: string | undefined, names: readonly string[]): string | null {
+  if (!pathname) return null;
+  const segments = pathname.split('/').filter(Boolean);
+  for (const name of names) {
+    const index = segments.indexOf(name);
+    const value = segments[index + 1];
+    if (value) return decodeURIComponent(value);
+  }
+  return null;
 }
 
 function App() {

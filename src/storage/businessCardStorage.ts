@@ -12,18 +12,48 @@ const businessCardSchema = z.object({
   email: z.string(),
 });
 
-export function saveBusinessCard(card: BusinessCard): void {
+const savedBusinessCardSchema = z.object({
+  card: businessCardSchema,
+  visitorProfileId: z.string().nullable().optional(),
+});
+
+export interface SavedBusinessCard {
+  readonly card: BusinessCard;
+  readonly visitorProfileId: string | null;
+}
+
+export function saveBusinessCard(
+  card: BusinessCard,
+  visitorProfileId: string | null = null,
+): void {
   if (typeof window === 'undefined') return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(card));
+  window.localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({ card, visitorProfileId }),
+  );
 }
 
 export function loadBusinessCard(): BusinessCard | null {
+  return loadSavedBusinessCard()?.card ?? null;
+}
+
+export function loadSavedBusinessCard(): SavedBusinessCard | null {
   if (typeof window === 'undefined') return null;
   const raw = window.localStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
   try {
     const parsed: unknown = JSON.parse(raw);
-    return businessCardSchema.parse(parsed);
+    const saved = savedBusinessCardSchema.safeParse(parsed);
+    if (saved.success) {
+      return {
+        card: saved.data.card,
+        visitorProfileId: saved.data.visitorProfileId ?? null,
+      };
+    }
+    return {
+      card: businessCardSchema.parse(parsed),
+      visitorProfileId: null,
+    };
   } catch {
     window.localStorage.removeItem(STORAGE_KEY);
     return null;

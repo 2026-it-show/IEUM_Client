@@ -26,9 +26,14 @@ function BusinessCardPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('scan');
   const [card, setCard] = useState<BusinessCard>(EMPTY_CARD);
+  const [visitorProfileId, setVisitorProfileId] = useState<string | null>(null);
 
-  const handleScanned = (parsed: BusinessCard) => {
-    setCard(parsed);
+  const handleScanned = (result: {
+    readonly card: BusinessCard;
+    readonly visitorProfileId: string;
+  }) => {
+    setCard(result.card);
+    setVisitorProfileId(result.visitorProfileId);
     setStep('form');
   };
 
@@ -45,7 +50,7 @@ function BusinessCardPage() {
   };
 
   const handleSubmit = () => {
-    saveBusinessCard(card);
+    saveBusinessCard(card, visitorProfileId);
     markInitialOnboardingCompleted();
     navigate(readSurveyReturnTo('/app'), { replace: true });
   };

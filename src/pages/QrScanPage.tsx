@@ -4,7 +4,7 @@ import * as S from './QrScanPage.styled';
 
 interface QrScanPageProps {
   onBack: () => void;
-  onScanned: () => void;
+  onScanned: (payload: string) => void;
 }
 
 function QrScanPage({ onBack, onScanned }: QrScanPageProps) {

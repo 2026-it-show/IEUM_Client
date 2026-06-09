@@ -53,6 +53,15 @@ const projectListSchema = z.object({
 
 const visitorProfileSchema = z.object({
   id: z.string(),
+  businessCardFileId: z.string().nullable().optional(),
+  businessCardBackFileId: z.string().nullable().optional(),
+  businessCardRegistered: z.boolean().optional(),
+  ocrRawText: z.string().nullable().optional(),
+  ocrName: z.string().nullable().optional(),
+  ocrOrganization: z.string().nullable().optional(),
+  ocrPosition: z.string().nullable().optional(),
+  ocrEmail: z.string().nullable().optional(),
+  ocrPhone: z.string().nullable().optional(),
 });
 
 const contactSchema = z.object({
@@ -80,6 +89,7 @@ export type IeumProjectSummary = z.infer<typeof projectSummarySchema>;
 export type IeumProjectDetail = z.infer<typeof projectDetailSchema>;
 export type IeumProjectMember = z.infer<typeof projectMemberSchema>;
 export type IeumProjectInterest = z.infer<typeof projectInterestSchema>;
+export type IeumVisitorProfile = z.infer<typeof visitorProfileSchema>;
 
 interface ProjectListCacheEntry {
   readonly expiresAt: number;
@@ -150,8 +160,9 @@ export async function createRecruiterContact(
   projectId: string,
   targetMemberUserId: string,
   card: BusinessCard | null,
+  visitorProfileId?: string | null,
 ): Promise<void> {
-  const profile = await requestData('/visitor-profiles', visitorProfileSchema, {
+  const profileId = visitorProfileId ?? (await requestData('/visitor-profiles', visitorProfileSchema, {
     method: 'POST',
     body: JSON.stringify({
       ageGroup: 'adult',
@@ -162,12 +173,12 @@ export async function createRecruiterContact(
       ocrEmail: card?.email || undefined,
       ocrPhone: card?.phone || undefined,
     }),
-  });
+  })).id;
 
   await requestData(`/projects/${projectId}/contacts`, contactSchema, {
     method: 'POST',
     body: JSON.stringify({
-      visitorProfileId: profile.id,
+      visitorProfileId: profileId,
       targetMemberUserId,
       name: card?.name || '채용 담당자',
       organization: card?.companyName || undefined,
@@ -179,6 +190,21 @@ export async function createRecruiterContact(
   });
 }
 
+export async function createRecruiterVisitorProfileFromBusinessCards(
+  frontFile: File,
+  backFile: File,
+): Promise<IeumVisitorProfile> {
+  const body = new FormData();
+  body.set('ageGroup', 'adult');
+  body.set('visitorType', 'recruiter');
+  body.set('businessCardFront', frontFile);
+  body.set('businessCardBack', backFile);
+  return requestData('/visitor-profiles', visitorProfileSchema, {
+    method: 'POST',
+    body,
+  });
+}
+
 async function requestData<TSchema extends z.ZodType>(
   path: string,
   schema: TSchema,
@@ -186,7 +212,9 @@ async function requestData<TSchema extends z.ZodType>(
 ): Promise<z.infer<TSchema>> {
   const headers = new Headers(init?.headers);
   headers.set('Accept', 'application/json');
-  headers.set('Content-Type', 'application/json');
+  if (!(init?.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
   const response = await fetch(buildApiUrl(API_BASE_URL, path), {
     ...init,
     headers,
