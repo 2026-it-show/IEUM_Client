@@ -351,7 +351,7 @@ function MapPage({ onClickQr, onPickCategory, onPickBooth }: MapPageProps) {
   return (
     <S.Page>
       <S.Header>
-        <S.Logo src="/assets/figma/client-header-logo.svg" alt="I.EUM" />
+        <S.Logo src="/assets/brand/ieum-client-header-logo.svg" alt="I.EUM" />
         <S.StopBadge>관람중단</S.StopBadge>
       </S.Header>
 

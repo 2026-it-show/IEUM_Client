@@ -41,7 +41,7 @@ function SplashScreen() {
   return (
     <PageWrapper>
       <MobileContainer>
-        <SplashLogo src="/assets/figma/splash-logo.apng" alt="IEUM" />
+        <SplashLogo src="/assets/splash/ieum-splash-logo.apng" alt="IEUM" />
       </MobileContainer>
     </PageWrapper>
   );
