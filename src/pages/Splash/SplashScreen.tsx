@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { hasCompletedInitialOnboarding } from '@/storage/userInteractionStorage';
 
 const PageWrapper = styled.div`
   width: 100%;
@@ -33,7 +34,7 @@ function SplashScreen() {
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      navigate('/survey/information');
+      navigate(hasCompletedInitialOnboarding() ? '/app' : '/survey/information');
     }, 2600);
     return () => window.clearTimeout(timeoutId);
   }, [navigate]);

@@ -44,9 +44,22 @@ export const GlobalStyle = createGlobalStyle`
     position: relative;
   }
 
+  @media (max-width: 520px) {
+    #root {
+      width: 100vw;
+      height: 100dvh;
+    }
+  }
+
   @supports not (height: 100dvh) {
     #root {
       height: min(100vh, ${({ theme }) => theme.viewport.height});
+    }
+
+    @media (max-width: 520px) {
+      #root {
+        height: 100vh;
+      }
     }
   }
 

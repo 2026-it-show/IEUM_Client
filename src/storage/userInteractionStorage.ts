@@ -1,4 +1,5 @@
 const GUIDE_DISMISSED_KEY = 'ieum.onboardingGuide.dismissed';
+const INITIAL_ONBOARDING_COMPLETED_KEY = 'ieum.initialOnboarding.completed';
 const MAP_TUTORIAL_DISMISSED_KEY = 'ieum.mapTutorial.dismissed';
 
 type SubmissionKind = 'feedback' | 'contact';
@@ -53,6 +54,14 @@ export function hasDismissedOnboardingGuide(): boolean {
 
 export function markOnboardingGuideDismissed(): void {
   writeFlag(GUIDE_DISMISSED_KEY, true);
+}
+
+export function hasCompletedInitialOnboarding(): boolean {
+  return readFlag(INITIAL_ONBOARDING_COMPLETED_KEY);
+}
+
+export function markInitialOnboardingCompleted(): void {
+  writeFlag(INITIAL_ONBOARDING_COMPLETED_KEY, true);
 }
 
 export function hasDismissedMapTutorial(): boolean {

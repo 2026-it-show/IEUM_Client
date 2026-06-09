@@ -6,17 +6,25 @@ import styled from 'styled-components';
 
 const PageWrapper = styled.div`
   width: 100%;
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   background-color: #ffffff;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 `;
 
 const MobileContainer = styled.div`
-  width: 390px;
-  height: 844px;
+  width: 100%;
+  height: 100%;
   background-color: #ffffff;
   position: relative; 
   margin: 0 auto;
   box-sizing: border-box;
+  overflow: hidden;
 `;
 
 // 뒤로가기 아이콘 (17 * 34)
@@ -48,8 +56,9 @@ const AgreementImage = styled.img`
   position: absolute;
   top: 77px;
   left: 20px;
-  width: 350px;
-  height: 451px;
+  right: 20px;
+  width: auto;
+  height: min(451px, calc(100% - 112px));
   object-fit: contain;
 `;
 
@@ -64,6 +73,7 @@ const Agreement2: React.FC = () => {
         <BackIcon 
           src="/assets/icons/back_icon.svg" 
           alt="Back" 
+          draggable={false}
           onClick={() => navigate('/survey/information')} 
         />
 

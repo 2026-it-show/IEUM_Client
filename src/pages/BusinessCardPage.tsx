@@ -7,6 +7,7 @@ import {
 } from '@/sections';
 import type { BusinessCard, BusinessCardField } from '@/data';
 import { saveBusinessCard } from '@/storage/businessCardStorage';
+import { markInitialOnboardingCompleted } from '@/storage/userInteractionStorage';
 import * as S from './BusinessCardPage.styled';
 
 type Step = 'scan' | 'form';
@@ -44,6 +45,7 @@ function BusinessCardPage() {
 
   const handleSubmit = () => {
     saveBusinessCard(card);
+    markInitialOnboardingCompleted();
     navigate('/app');
   };
 

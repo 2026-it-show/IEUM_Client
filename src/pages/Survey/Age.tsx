@@ -20,17 +20,25 @@ const AGE_OPTIONS: AgeOption[] = [
 
 const PageWrapper = styled.div`
   width: 100%;
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   background-color: #ffffff;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 `;
 
 const MobileContainer = styled.div`
-  width: 390px;
-  height: 844px;
+  width: 100%;
+  height: 100%;
   background-color: #ffffff;
   position: relative; 
   margin: 0 auto;
   box-sizing: border-box;
+  overflow: hidden;
 `;
 
 const BackIcon = styled.img`
@@ -45,9 +53,9 @@ const BackIcon = styled.img`
 
 const ProgressBarContainer = styled.div`
   position: absolute;
-  top: 31px;
+  top: clamp(24px, 3.7dvh, 31px);
   left: 57px;
-  width: 309px;
+  right: 24px;
   height: 6px;
   background-color: #E9E9E9;
   border-radius: 3px;
@@ -64,27 +72,30 @@ const ProgressBarFill = styled.div<{ $width: number }>`
 
 const Title = styled.h1`
   position: absolute;
-  top: 64px;
-  left: 76px; 
+  top: clamp(52px, 7.6dvh, 64px);
+  left: 24px;
+  right: 24px;
   font-family: 'Gmarket Sans', sans-serif;
   font-size: 24px;
   font-weight: 500; 
   color: #222222;
   margin: 0;
+  text-align: center;
 `;
 
 const OptionsContainer = styled.div`
   position: absolute;
-  top: 134px;
+  top: clamp(112px, 15.9dvh, 134px);
   left: 24px;
+  right: 24px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: clamp(9px, 1.4dvh, 12px);
 `;
 
 const CardBox = styled.div<{ $isSelected: boolean }>`
-  width: 342px;
-  height: 91px;
+  width: 100%;
+  height: clamp(76px, 10.8dvh, 91px);
   border-radius: 12px;
   position: relative; 
   box-sizing: border-box;
@@ -118,9 +129,9 @@ const CardRange = styled.span`
 
 const NextButton = styled.button<{ $isActive: boolean }>`
   position: absolute;
-  bottom: 29px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   left: 24px;
-  width: 342px;
+  right: 24px;
   height: 52px;
   border-radius: 12px;
   border: none;
@@ -157,6 +168,7 @@ const Age: React.FC = () => {
         <BackIcon
           src="/assets/icons/back_icon.svg"
           alt="Back"
+          draggable={false}
           onClick={() => navigate('/survey/information')}
         />
 
