@@ -40,16 +40,13 @@ function ServiceIntroSection({
   const thumbnail =
     project.thumbnailUrl ?? project.thumbnailPath ?? '/assets/image/growvy.png';
 
-  const handleInterestToggle = async () => {
+  const handleInterestToggle = () => {
     if (interested || saving) return;
-    setInterestState({ projectId: project.id, interested: false, saving: true });
-    try {
-      await markProjectInterest(project.id);
-      saveProjectInterest(project.id, true);
+    saveProjectInterest(project.id, true);
+    setInterestState({ projectId: project.id, interested: true, saving: true });
+    void markProjectInterest(project.id).finally(() => {
       setInterestState({ projectId: project.id, interested: true, saving: false });
-    } catch {
-      setInterestState({ projectId: project.id, interested: false, saving: false });
-    }
+    });
   };
 
   return (
@@ -65,7 +62,7 @@ function ServiceIntroSection({
           </S.TitleText>
           <S.LikeButton
             type="button"
-            aria-label="관심 프로젝트"
+            aria-label={interested ? '관심 표시 완료' : '관심 프로젝트'}
             aria-pressed={interested}
             $active={interested}
             disabled={saving}
