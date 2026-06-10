@@ -6,6 +6,9 @@ import {
   BusinessCardFormSection,
 } from '@/sections';
 import type { BusinessCard, BusinessCardField } from '@/data';
+import { saveBusinessCard } from '@/storage/businessCardStorage';
+import { markInitialOnboardingCompleted } from '@/storage/userInteractionStorage';
+import { readSurveyReturnTo } from '@/utils/surveyReturn';
 import * as S from './BusinessCardPage.styled';
 
 type Step = 'scan' | 'form';
@@ -23,9 +26,14 @@ function BusinessCardPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('scan');
   const [card, setCard] = useState<BusinessCard>(EMPTY_CARD);
+  const [visitorProfileId, setVisitorProfileId] = useState<string | null>(null);
 
-  const handleScanned = (parsed: BusinessCard) => {
-    setCard(parsed);
+  const handleScanned = (result: {
+    readonly card: BusinessCard;
+    readonly visitorProfileId: string;
+  }) => {
+    setCard(result.card);
+    setVisitorProfileId(result.visitorProfileId);
     setStep('form');
   };
 
@@ -42,7 +50,9 @@ function BusinessCardPage() {
   };
 
   const handleSubmit = () => {
-    navigate('/app');
+    saveBusinessCard(card, visitorProfileId);
+    markInitialOnboardingCompleted();
+    navigate(readSurveyReturnTo('/app'), { replace: true });
   };
 
   return (
@@ -51,6 +61,7 @@ function BusinessCardPage() {
         title="채용 희망"
         onBack={handleBack}
         color={step === 'scan' ? 'light' : 'dark'}
+        surface={step === 'scan' ? 'scan' : 'default'}
       />
       {step === 'scan' ? (
         <BusinessCardScanSection onScanned={handleScanned} />

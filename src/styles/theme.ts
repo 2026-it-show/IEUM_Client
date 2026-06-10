@@ -10,7 +10,7 @@ const colors = {
   gray400: '#9CA3AF',
   gray500: '#6B7280',
 
-  bgPlaceholder: '#D9D9D9',
+  bgPlaceholder: '#B4B4B4',
 } as const;
 
 const fonts = {

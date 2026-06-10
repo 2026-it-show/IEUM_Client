@@ -10,7 +10,11 @@ import type {
   PointerEvent as ReactPointerEvent,
   WheelEvent as ReactWheelEvent,
 } from 'react';
-import { EXPERIENCE_CATEGORIES, BOOTHS } from '@/data';
+import {
+  BOOTHS,
+  EXPERIENCE_CATEGORIES,
+  FIGMA_MAP_SIZE,
+} from '@/data';
 import type {
   Booth,
   ExperienceCategory,
@@ -20,34 +24,65 @@ import {
   CategoryPillButton,
   CategoryTileButton,
   MapCanvas,
+  MapTutorialOverlay,
 } from '@/components';
 import * as S from './MapPage.styled';
 
 interface MapPageProps {
   onClickQr: () => void;
   onPickCategory: (categoryId: ExperienceCategoryId) => void;
+  onPickBooth: (booth: Booth) => void;
+  showTutorial?: boolean;
+  onTutorialDismiss?: () => void;
 }
 
-const MIN_SCALE = 0.5;
-const MAX_SCALE = 3.6;
+const MIN_SCALE = 0.25;
+const MAX_SCALE = 2.6;
 const DRAG_THRESHOLD_PX = 6;
-/** Scale at which booth tiles switch from booth code → service name. */
-const SERVICE_NAME_SCALE = 1.5;
 const PINCH_THRESHOLD_PX = 4;
-/** Initial zoom – the user explicitly asked for "기본값을 더 확대해". */
-const INITIAL_SCALE = 1.5;
+const NATURAL_MAP_W = FIGMA_MAP_SIZE.w;
+const NATURAL_MAP_H = FIGMA_MAP_SIZE.h;
+const MOBILE_INITIAL_TOP_OFFSET = 58;
+const MAP_HEADER_SAFE_TOP = 58;
 
-/**
- * The map is rendered at its NATURAL pixel size (no fit-to-stage scaling) so
- * that the booth sizes resolve exactly to the values requested by the spec
- * (23×28, 11×36, 36×11 px). The stage just clips, and the user pans /
- * pinch-zooms in both directions to see the whole floor.
- */
-// Match the natural size declared in src/data/booths.ts (MAP_W × MAP_H).
-// Tightening MAP_W brings columns horizontally closer together so the map
-// has less white space, while individual booth dimensions stay unchanged.
-const NATURAL_MAP_W = 590;
-const NATURAL_MAP_H = 1024;
+function getInitialScale(stageWidth: number, stageHeight: number): number {
+  const widthScale = (stageWidth - 32) / NATURAL_MAP_W;
+  const topOffset = getInitialTopOffset(stageWidth);
+  const heightScale = (stageHeight + topOffset) / NATURAL_MAP_H;
+  return Math.min(0.62, Math.max(0.36, widthScale, heightScale));
+}
+
+function getInitialTopOffset(stageWidth: number): number {
+  return stageWidth <= 520 ? MOBILE_INITIAL_TOP_OFFSET : 0;
+}
+
+function getMapTopLimit(stageWidth: number): number {
+  return stageWidth <= 520 ? MAP_HEADER_SAFE_TOP : 48;
+}
+
+function clampMapTranslate(
+  s: number,
+  rawTx: number,
+  rawTy: number,
+  stageW: number,
+  stageH: number,
+  baseW: number,
+  baseH: number,
+): { readonly tx: number; readonly ty: number } {
+  const dispW = baseW * s;
+  const dispH = baseH * s;
+  const maxTop = getMapTopLimit(stageW);
+
+  const minTx = Math.min(0, stageW - dispW);
+  const maxTx = Math.max(0, stageW - dispW);
+  const minTy = Math.min(0, stageH - dispH);
+  const maxTy = Math.max(maxTop, stageH - dispH);
+
+  return {
+    tx: Math.min(Math.max(rawTx, minTx), maxTx),
+    ty: Math.min(Math.max(rawTy, minTy), maxTy),
+  };
+}
 
 function tileStyle(item: {
   x: number;
@@ -60,7 +95,19 @@ function tileStyle(item: {
     top: `${item.y * 100}%`,
     width: `${item.w * 100}%`,
     height: `${item.h * 100}%`,
-  };
+  } as CSSProperties;
+}
+
+function shouldRenderBoothLabel(booth: Booth): boolean {
+  return Boolean(booth.serviceName);
+}
+
+function isInteractiveBooth(booth: Booth): boolean {
+  return Boolean(booth.serviceName) && !booth.aux;
+}
+
+function serviceLabelOrientation(booth: Booth): 'horizontal' | 'vertical' {
+  return booth.h > booth.w ? 'vertical' : 'horizontal';
 }
 
 interface ActivePointer {
@@ -68,7 +115,13 @@ interface ActivePointer {
   y: number;
 }
 
-function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
+function MapPage({
+  onClickQr,
+  onPickCategory,
+  onPickBooth,
+  showTutorial = false,
+  onTutorialDismiss,
+}: MapPageProps) {
   const stageRef = useRef<HTMLDivElement>(null);
 
   const [stageSize, setStageSize] = useState({ w: 0, h: 0 });
@@ -76,8 +129,6 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
   const [scale, setScale] = useState(1);
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
-
-  const showServiceName = scale >= SERVICE_NAME_SCALE;
 
   const dragRef = useRef<{
     pointerId: number;
@@ -101,20 +152,15 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
 
   const clampTranslate = useCallback(
     (s: number, rawTx: number, rawTy: number) => {
-      const dispW = baseSize.w * s;
-      const dispH = baseSize.h * s;
-      const stageW = stageSize.w;
-      const stageH = stageSize.h;
-
-      const minTx = Math.min(0, stageW - dispW);
-      const maxTx = Math.max(0, stageW - dispW);
-      const minTy = Math.min(0, stageH - dispH);
-      const maxTy = Math.max(0, stageH - dispH);
-
-      return {
-        tx: Math.min(Math.max(rawTx, minTx), maxTx),
-        ty: Math.min(Math.max(rawTy, minTy), maxTy),
-      };
+      return clampMapTranslate(
+        s,
+        rawTx,
+        rawTy,
+        stageSize.w,
+        stageSize.h,
+        baseSize.w,
+        baseSize.h,
+      );
     },
     [baseSize, stageSize],
   );
@@ -125,16 +171,12 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
 
     const rect = stageEl.getBoundingClientRect();
 
-    // Fixed natural map size – the map is *not* fit to the stage. Booths get
-    // their exact spec-pixel sizes (23×28 etc.) and the user pans both axes.
     const baseW = NATURAL_MAP_W;
     const baseH = NATURAL_MAP_H;
 
     setStageSize({ w: rect.width, h: rect.height });
     setBaseSize({ w: baseW, h: baseH });
 
-    // Optional ?focus=<id> query lets us deep-link the initial map view to a
-    // specific point on the floor – handy for sharing & QA screenshots.
     const params =
       typeof window !== 'undefined'
         ? new URLSearchParams(window.location.search)
@@ -151,17 +193,37 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
       g: { x: 0.102, y: 0.62 },
     };
     const focal = (focus && FOCAL_POINTS[focus]) || null;
+    const zoomValue = params?.get('zoom');
+    const zoomParam = zoomValue === null ? null : Number(zoomValue);
 
-    setScale(INITIAL_SCALE);
+    const initialScale = typeof zoomParam === 'number' && Number.isFinite(zoomParam)
+      ? Math.min(MAX_SCALE, Math.max(MIN_SCALE, zoomParam))
+      : getInitialScale(rect.width, rect.height);
+    setScale(initialScale);
     if (focal) {
-      // Centre the focal point in the stage.
-      setTx(rect.width / 2 - focal.x * baseW * INITIAL_SCALE);
-      setTy(rect.height / 2 - focal.y * baseH * INITIAL_SCALE);
+      const positioned = clampMapTranslate(
+        initialScale,
+        rect.width / 2 - focal.x * baseW * initialScale,
+        rect.height / 2 - focal.y * baseH * initialScale,
+        rect.width,
+        rect.height,
+        baseW,
+        baseH,
+      );
+      setTx(positioned.tx);
+      setTy(positioned.ty);
     } else {
-      // Top-left aligned by default so column A + top-row horizontals are
-      // visible right away.
-      setTx(0);
-      setTy(0);
+      const positioned = clampMapTranslate(
+        initialScale,
+        (rect.width - baseW * initialScale) / 2,
+        getInitialTopOffset(rect.width),
+        rect.width,
+        rect.height,
+        baseW,
+        baseH,
+      );
+      setTx(positioned.tx);
+      setTy(positioned.ty);
     }
   }, []);
 
@@ -179,6 +241,16 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
     };
   }, [recomputeBaseSize]);
 
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const blockBrowserZoom = (event: WheelEvent) => {
+      event.preventDefault();
+    };
+    stage.addEventListener('wheel', blockBrowserZoom, { passive: false });
+    return () => stage.removeEventListener('wheel', blockBrowserZoom);
+  }, []);
+
   const applyZoomAt = useCallback(
     (nextScale: number, anchorStageX: number, anchorStageY: number) => {
       const clampedScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, nextScale));
@@ -195,6 +267,7 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
   );
 
   const handleWheel = (e: ReactWheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
     if (!stageRef.current || baseSize.w === 0) return;
     const stageRect = stageRef.current.getBoundingClientRect();
     const px = e.clientX - stageRect.left;
@@ -222,7 +295,6 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
         captured: false,
       };
     } else if (pointersRef.current.size === 2) {
-      // Begin pinch
       const pts = Array.from(pointersRef.current.values());
       const dx = pts[0].x - pts[1].x;
       const dy = pts[0].y - pts[1].y;
@@ -251,7 +323,6 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
       pointersRef.current.set(e.pointerId, { x: localX, y: localY });
     }
 
-    // Pinch zoom (two pointers)
     if (pointersRef.current.size === 2 && pinchRef.current) {
       const pts = Array.from(pointersRef.current.values());
       const dx = pts[0].x - pts[1].x;
@@ -273,7 +344,6 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
       return;
     }
 
-    // Drag-pan (one pointer)
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
     const dx = e.clientX - drag.startX;
@@ -318,7 +388,7 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
     e: React.MouseEvent<HTMLButtonElement>,
   ) => {
     e.stopPropagation();
-    onPickCategory(booth.categoryId);
+    onPickBooth(booth);
   };
 
   const handlePillClick = (
@@ -332,11 +402,16 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
   return (
     <S.Page>
       <S.Header>
-        <S.Logo src="/assets/icons/logo1.svg" alt="I.EUM" />
+        <S.Logo
+          src="/assets/brand/ieum-client-header-logo.svg"
+          alt="I.EUM"
+          draggable={false}
+        />
         <S.StopBadge>관람중단</S.StopBadge>
       </S.Header>
 
       <S.Stage
+        data-map-stage
         ref={stageRef}
         onWheel={handleWheel}
         onPointerDown={handlePointerDown}
@@ -345,6 +420,7 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
         onPointerCancel={endPointer}
       >
         <S.ImageGroup
+          data-map-image-group
           style={{
             transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
             width: baseSize.w || undefined,
@@ -355,34 +431,36 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
             <MapCanvas width={baseSize.w} height={baseSize.h} />
           ) : null}
 
-          {/* 부스 버튼: map 위 모든 colored 네모를 동일한 위치/크기로 덮음 */}
-          {BOOTHS.map((booth) => (
-            <CategoryTileButton
-              key={booth.id}
-              color={booth.color}
-              label={booth.title}
-              serviceName={booth.serviceName}
-              showServiceName={showServiceName}
-              labelOffsetY={booth.labelOffsetY}
-              style={tileStyle(booth)}
-              onClick={(e) => handleBoothClick(booth, e)}
-              aria-label={
-                booth.serviceName
-                  ? `${booth.title} ${booth.serviceName}`
-                  : booth.title
-              }
-              title={
-                booth.serviceName
-                  ? `${booth.title} · ${booth.serviceName}`
-                  : booth.title
-              }
-            />
-          ))}
+          {BOOTHS.map((booth) =>
+            isInteractiveBooth(booth) ? (
+              <CategoryTileButton
+                key={booth.id}
+                color={booth.color}
+                label={booth.title}
+                serviceName={booth.serviceName}
+                showServiceName={shouldRenderBoothLabel(booth)}
+                showLabel={false}
+                serviceOrientation={serviceLabelOrientation(booth)}
+                hitboxOnly={false}
+                labelOffsetY={booth.labelOffsetY}
+                style={tileStyle(booth)}
+                onClick={(e) => handleBoothClick(booth, e)}
+                aria-label={`${booth.title} ${booth.serviceName}`}
+                title={`${booth.title} · ${booth.serviceName}`}
+              />
+            ) : (
+              <S.EmptyBooth
+                key={booth.id}
+                $color={booth.color}
+                data-booth-empty={booth.id}
+                style={tileStyle(booth)}
+                aria-hidden="true"
+              />
+            ),
+          )}
 
         </S.ImageGroup>
 
-        {/* 카테고리 라벨(흰 알약)은 줌과 독립적으로 고정 크기(119.21×55.95)를
-            유지해야 하므로 변환 그룹 밖에서 화면 좌표로 직접 배치합니다. */}
         <S.PillLayer aria-hidden={baseSize.w === 0 ? true : undefined}>
           {baseSize.w > 0 &&
             EXPERIENCE_CATEGORIES.map((category) => {
@@ -404,9 +482,19 @@ function MapPage({ onClickQr, onPickCategory }: MapPageProps) {
         </S.PillLayer>
       </S.Stage>
 
-      <S.QrFab type="button" onClick={onClickQr} aria-label="QR 스캔 열기">
-        <img src="/assets/icons/qr_button_icon.svg" alt="" aria-hidden="true" />
-      </S.QrFab>
+      {!showTutorial ? (
+        <S.QrFab type="button" onClick={onClickQr} aria-label="QR 스캔 열기">
+          <img
+            src="/assets/icons/qr_button_icon.svg"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+          />
+        </S.QrFab>
+      ) : null}
+      {showTutorial && onTutorialDismiss ? (
+        <MapTutorialOverlay onDismiss={onTutorialDismiss} />
+      ) : null}
     </S.Page>
   );
 }

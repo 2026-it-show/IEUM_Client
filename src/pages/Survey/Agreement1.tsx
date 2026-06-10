@@ -1,37 +1,37 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { withSurveyReturnTo } from '@/utils/surveyReturn';
 
 // --- 스타일드 컴포넌트 ---
 
 const PageWrapper = styled.div`
   width: 100%;
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   background-color: #ffffff;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 `;
 
 const MobileContainer = styled.div`
-  width: 390px;
-  height: 844px;
+  width: 100%;
+  height: 100%;
   background-color: #ffffff;
   position: relative; 
   margin: 0 auto;
   box-sizing: border-box;
-`;
-
-const NavImage = styled.img`
-  width: 390px;
-  height: 48px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 10;
+  overflow: hidden;
 `;
 
 // 뒤로가기 아이콘 (17 * 34)
 const BackIcon = styled.img`
   position: absolute;
-  top: 65px;
+  top: 17px;
   left: 24px;
   width: 17px;
   height: 34px;
@@ -42,7 +42,7 @@ const BackIcon = styled.img`
 // 상단 타이틀 텍스트 (지마켓 산스 미디엄, 16px)
 const HeaderTitle = styled.h2`
   position: absolute;
-  top: 74px;
+  top: 26px;
   left: 57px;
   margin: 0;
   font-family: 'Gmarket Sans', sans-serif;
@@ -55,10 +55,11 @@ const HeaderTitle = styled.h2`
 // 약관 본문 이미지 (350 * 495)
 const AgreementImage = styled.img`
   position: absolute;
-  top: 125px;
+  top: 77px;
   left: 20px;
-  width: 350px;
-  height: 495px;
+  right: 20px;
+  width: auto;
+  height: min(495px, calc(100% - 112px));
   object-fit: contain;
 `;
 
@@ -69,14 +70,12 @@ const Agreement1: React.FC = () => {
   return (
     <PageWrapper>
       <MobileContainer>
-        {/* 1. 상단 내비게이션 바 */}
-        <NavImage src="/assets/nav.svg" alt="Navigation Bar" />
-
         {/* 2. 뒤로가기 버튼 (클릭 시 설문 정보 페이지로 리다이렉트) */}
         <BackIcon 
           src="/assets/icons/back_icon.svg" 
           alt="Back" 
-          onClick={() => navigate('/survey/information')} 
+          draggable={false}
+          onClick={() => navigate(withSurveyReturnTo('/survey/information'))} 
         />
 
         {/* 3. 헤더 타이틀 */}

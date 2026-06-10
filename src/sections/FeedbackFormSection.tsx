@@ -17,7 +17,12 @@ function FeedbackFormSection({ onSubmit }: FeedbackFormSectionProps) {
         onChange={(e) => setMessage(e.target.value)}
       />
       <S.BottomCTA>
-        <PrimaryButton onClick={() => onSubmit(message)}>확인</PrimaryButton>
+        <PrimaryButton
+          disabled={message.trim().length < 2}
+          onClick={() => onSubmit(message.trim())}
+        >
+          확인
+        </PrimaryButton>
       </S.BottomCTA>
     </S.Wrapper>
   );

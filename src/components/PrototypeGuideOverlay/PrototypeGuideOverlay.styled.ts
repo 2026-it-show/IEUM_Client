@@ -3,8 +3,8 @@ import styled from 'styled-components';
 export const Overlay = styled.div`
   position: absolute;
   inset: 0;
-  z-index: 4;
-  background-color: rgba(0, 0, 0, 0.55);
+  z-index: 8;
+  background-color: rgba(0, 0, 0, 0.72);
   cursor: pointer;
 `;
 
@@ -12,7 +12,7 @@ export const Anchor = styled.div`
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(${({ theme }) => theme.layout.bottomCTAOffset} + 56px + 8px);
+  top: 663px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -21,16 +21,53 @@ export const Anchor = styled.div`
 
 export const Caption = styled.p`
   color: ${({ theme }) => theme.colors.white};
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1.5;
   text-align: center;
-  margin-bottom: 12px;
+  margin: 0;
   white-space: pre-line;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 `;
 
-export const Arrow = styled.svg`
-  width: 70px;
+export const Arrow = styled.img`
+  width: 35px;
+  height: 36px;
+  margin-top: 18px;
+  margin-left: 8px;
+  transform: rotate(180deg);
+`;
+
+export const ActionRow = styled.div<{ $single: boolean }>`
+  position: absolute;
+  left: 23px;
+  right: 24px;
+  bottom: 25px;
+  display: flex;
+  gap: 9px;
+  pointer-events: none;
+
+  > * {
+    flex: ${({ $single }) => ($single ? '0 0 167px' : '1 1 0')};
+    margin-left: ${({ $single }) => ($single ? 'auto' : 0)};
+  }
+`;
+
+const TutorialButton = styled.div`
   height: 60px;
-  margin-left: 12px;
+  border-radius: ${({ theme }) => theme.radius.md};
+  color: ${({ theme }) => theme.colors.white};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.5;
+`;
+
+export const FeedbackButton = styled(TutorialButton)`
+  background-color: #4e3e85;
+`;
+
+export const HireButton = styled(TutorialButton)`
+  background-color: ${({ theme }) => theme.colors.primary};
 `;

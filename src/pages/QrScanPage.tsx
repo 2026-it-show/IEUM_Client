@@ -4,13 +4,13 @@ import * as S from './QrScanPage.styled';
 
 interface QrScanPageProps {
   onBack: () => void;
-  onScanned: () => void;
+  onScanned: (payload: string) => void;
 }
 
 function QrScanPage({ onBack, onScanned }: QrScanPageProps) {
   return (
     <S.Page>
-      <BackHeader title="QR" onBack={onBack} color="light" />
+      <BackHeader title="QR" onBack={onBack} color="light" surface="scan" />
       <QrScanSection onScanned={onScanned} />
     </S.Page>
   );

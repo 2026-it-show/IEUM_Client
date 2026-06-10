@@ -1,335 +1,160 @@
 import type { ExperienceCategoryId } from './types';
 
-export interface Booth {
-  id: string;
-  /** Booth code label ("A1", "B-2", ...) shown by default. */
-  title: string;
-  /** Service name shown when the map is zoomed in. Empty for aux. */
-  serviceName: string;
-  categoryId: ExperienceCategoryId;
-  color: string;
-  /** Center coordinates as a fraction of the map width/height (0~1). */
-  x: number;
-  y: number;
-  /** Tile width/height as a fraction of the map width/height (0~1). */
-  w: number;
-  h: number;
-  /** Auxiliary / connector booth (dashed codes like "A-2"). */
-  aux?: boolean;
-  /**
-   * Vertical nudge of the LABEL ONLY (CSS px). Lets adjacent booths
-   * stay in a single row while their labels alternate up/down to avoid
-   * overlap (used by the E-row).
-   */
-  labelOffsetY?: number;
-}
+export interface Booth { readonly id: string; readonly title: string; readonly serviceName: string; readonly categoryId: ExperienceCategoryId; readonly color: string; readonly x: number; readonly y: number; readonly w: number; readonly h: number; readonly aux?: boolean; readonly labelOffsetY?: number; }
 
-/**
- * The map is rendered at a fixed natural size. Booth dimensions are
- * defined in absolute pixels, the positions below as fractions of the
- * natural map. Tightening MAP_W brings the columns horizontally closer
- * together (user requested less white space) without changing the booth
- * size itself.
- *
- *   main "V"     – 23 × 28 px (most booths)
- *   long  "LV"  – 11 × 36 px (long verticals  : A-1, A-3, B-3, …)
- *   long  "LH"  – 36 × 11 px (long horizontals: B-1, C-1, D-1, F-5, …)
- *
- * A 1-px gap is always preserved between adjacent booths inside the same
- * cluster (see `STEP_*` below).
- */
-export const MAP_W = 590;
-export const MAP_H = 1024;
+const COLOR = { global: '#D88E70', ai: '#2B92D0', human: '#F399BE', network: '#F4827E', personal: '#23B575', creative: '#F9C96B', journey: '#C797C5' } as const;
+const JOURNEY_STACK_X = 0.745164;
+const JOURNEY_BOTTOM_AUX_Y = 0.942872;
 
-const V = { w: 23 / MAP_W, h: 28 / MAP_H }; // 23×28 main
-const LV = { w: 11 / MAP_W, h: 36 / MAP_H }; // 11×36 long vertical
-const LH = { w: 36 / MAP_W, h: 11 / MAP_H }; // 36×11 long horizontal
-
-// Centre-to-centre step with a 1-px gap:
-const STEP_V_Y = (28 + 1) / MAP_H; // main column vertical step
-const STEP_LV_Y = (36 + 1) / MAP_H; // long-vertical stack step
-const STEP_LH_X = (36 + 1) / MAP_W; // long-horizontal row step
-
-const COLOR = {
-  global: '#D88E70',
-  ai: '#2B92D0',
-  human: '#F399BE',
-  network: '#F4827E',
-  personal: '#23B575',
-  creative: '#F9C96B',
-  journey: '#B68FCF',
-} as const;
-
-const main = (
-  id: string,
-  categoryId: ExperienceCategoryId,
-  x: number,
-  y: number,
-  serviceName: string,
-  size: Pick<Booth, 'w' | 'h'> = V,
-  labelOffsetY?: number,
-): Booth => ({
-  id,
-  title: id,
-  serviceName,
-  categoryId,
-  color: COLOR[categoryId],
-  x,
-  y,
-  w: size.w,
-  h: size.h,
-  labelOffsetY,
-});
-
-const aux = (
-  id: string,
-  categoryId: ExperienceCategoryId,
-  x: number,
-  y: number,
-  size: Pick<Booth, 'w' | 'h'> = LV,
-): Booth => ({
-  id,
-  title: id,
-  serviceName: '',
-  categoryId,
-  color: COLOR[categoryId],
-  x,
-  y,
-  w: size.w,
-  h: size.h,
-  aux: true,
-});
-
-// Helper: generates [n] vertically-stacked booth centres starting at topY
-const stackY = (topY: number, n: number, step: number): number[] =>
-  Array.from({ length: n }, (_, i) => topY + i * step);
-
-// Helper: generates [n] horizontally-stacked booth centres
-const stackX = (leftX: number, n: number, step: number): number[] =>
-  Array.from({ length: n }, (_, i) => leftX + i * step);
-
-// ── A column (AI) ─────────────────────────────────────────────────
-const AX = 0.137;
-const aY = stackY(0.234, 6, STEP_V_Y); // A6, A5, A4, A3, A2, A1
-
-// A-2, A-1 cluster at top
-const AAUX_TOP_X = 0.199;
-const A2y = 0.103;
-const A1y = A2y + STEP_LV_Y;
-
-// A-3, A-4 cluster middle
-const AAUX_MID_X = 0.295;
-const A3y = 0.250;
-const A4y = A3y + STEP_LV_Y;
-const A5y = 0.395;
-
-// ── B column (Human) ──────────────────────────────────────────────
-const BX = 0.386;
-const bY = stackY(0.264, 4, STEP_V_Y); // B4, B3, B2, B1
-
-const B1x = 0.314;
-const B2x = B1x + STEP_LH_X;
-const BTOPy = 0.049;
-
-const BAUX_X = 0.478;
-const B3y = 0.232;
-const B4y = B3y + STEP_LV_Y;
-const B5x = 0.518;
-const B5y = 0.361;
-
-// ── C column (Network) ────────────────────────────────────────────
-const CX = 0.566;
-const cY = stackY(0.205, 6, STEP_V_Y); // C6 .. C1
-
-const C1x = 0.452;
-const C2x = C1x + STEP_LH_X;
-
-const CAUX_X = 0.668;
-const C3y = 0.232;
-const C4y = C3y + STEP_LV_Y;
-const C5x = 0.695;
-const C5y = 0.363;
-
-// ── D column (Personal) ───────────────────────────────────────────
-const DX = 0.723;
-const dY = stackY(0.208, 6, STEP_V_Y); // D6 .. D1
-
-const D1x = 0.622;
-const D2x = D1x + STEP_LH_X;
-
-const DAUX_X = 0.828;
-const D3y = 0.130;
-const D4y = D3y + STEP_LV_Y;
-const D5y = D4y + STEP_LV_Y + 0.014; // small extra gap to match image
-
-// ── E row (Creative) – horizontal row of 6 booths on ONE row.
-//    The label-only zig-zag (labelOffsetY) below alternates labels above
-//    /below the booth so the long service-names ("Feed or Protect" etc.)
-//    never collide with neighbours – the booth boxes themselves stay
-//    perfectly aligned in a single row.
-const E_STEP_X = (23 + 6) / MAP_W; // slightly wider horizontal step for E row
-const eY0 = 0.602; // single row y
-const eX = stackX(0.585, 6, E_STEP_X);
-// 3-tier label zig-zag so even same-parity booths are at different heights:
-//   E1 top, E2 mid, E3 bottom, E4 top, E5 mid, E6 bottom
-const E_LBL_TOP = -26;
-const E_LBL_MID = 0;
-const E_LBL_BOT = 26;
-const eLabelOffsetY = [
-  E_LBL_TOP,
-  E_LBL_MID,
-  E_LBL_BOT,
-  E_LBL_TOP,
-  E_LBL_MID,
-  E_LBL_BOT,
-];
-
-const EAUX_X = 0.878; // E-1, E-2, E-3 (right side verticals)
-const E1y = 0.363;
-const E2y = E1y + STEP_LV_Y + 0.019;
-const E3y = E2y + STEP_LV_Y + 0.031;
-
-const E6x = 0.508;
-const E6y = 0.567;
-const E5x = 0.760;
-const E4x = E5x + STEP_LH_X;
-const E45y = 0.546;
-
-// ── F column (Journey) ────────────────────────────────────────────
-const FX = 0.708;
-const fY = stackY(0.695, 6, STEP_V_Y); // F6 .. F1
-
-const FAUX_X = 0.944;
-const F1y = 0.690;
-const F2y = F1y + STEP_LV_Y + 0.036;
-const F3y = F2y + STEP_LV_Y + 0.036;
-const F4y = F3y + STEP_LV_Y + 0.029;
-
-const F5x = 0.862;
-const F6x = F5x - STEP_LH_X;
-const F56y = 0.913;
-
-// ── G column (Global) ─────────────────────────────────────────────
-const GX = 0.102;
-const gY = stackY(0.518, 7, STEP_V_Y); // G7 .. G1
-
-export const BOOTHS: Booth[] = [
-  // ─── AI Experience (blue) ───────────────────────────────────────
-  aux('A-2', 'ai', AAUX_TOP_X, A2y),
-  aux('A-1', 'ai', AAUX_TOP_X, A1y),
-  main('A6', 'ai', AX, aY[0], 'Tone-Z'),
-  main('A5', 'ai', AX, aY[1], 'Mony'),
-  main('A4', 'ai', AX, aY[2], '오모'),
-  main('A3', 'ai', AX, aY[3], 'Reco'),
-  main('A2', 'ai', AX, aY[4], '무브잇'),
-  main('A1', 'ai', AX, aY[5], 'MALO'),
-  aux('A-3', 'ai', AAUX_MID_X, A3y),
-  aux('A-4', 'ai', AAUX_MID_X, A4y),
-  aux('A-5', 'ai', AAUX_MID_X, A5y),
-
-  // ─── Human Experience (pink) ────────────────────────────────────
-  aux('B-1', 'human', B1x, BTOPy, LH),
-  aux('B-2', 'human', B2x, BTOPy, LH),
-  main('B4', 'human', BX, bY[0], 'MAKO'),
-  main('B3', 'human', BX, bY[1], 'SafeShield'),
-  main('B2', 'human', BX, bY[2], 'Dear Me;Dear You'),
-  main('B1', 'human', BX, bY[3], 'Naru'),
-  aux('B-3', 'human', BAUX_X, B3y),
-  aux('B-4', 'human', BAUX_X, B4y),
-  aux('B-5', 'human', B5x, B5y),
-
-  // ─── Network Experience (coral) ─────────────────────────────────
-  aux('C-1', 'network', C1x, BTOPy, LH),
-  aux('C-2', 'network', C2x, BTOPy, LH),
-  main('C6', 'network', CX, cY[0], 'OVLY'),
-  main('C5', 'network', CX, cY[1], 'Star Spot'),
-  main('C4', 'network', CX, cY[2], '정명'),
-  main('C3', 'network', CX, cY[3], 'AdMatch'),
-  main('C2', 'network', CX, cY[4], 'Survly'),
-  main('C1', 'network', CX, cY[5], '이음'),
-  aux('C-3', 'network', CAUX_X, C3y),
-  aux('C-4', 'network', CAUX_X, C4y),
-  aux('C-5', 'network', C5x, C5y),
-
-  // ─── Personal Experience (green) ────────────────────────────────
-  aux('D-1', 'personal', D1x, BTOPy, LH),
-  aux('D-2', 'personal', D2x, BTOPy, LH),
-  main('D6', 'personal', DX, dY[0], '이상형.zip'),
-  main('D5', 'personal', DX, dY[1], 'Mikura'),
-  main('D4', 'personal', DX, dY[2], 'Ribumi'),
-  main('D3', 'personal', DX, dY[3], '애인 사주오!'),
-  main('D2', 'personal', DX, dY[4], '더그아웃'),
-  main('D1', 'personal', DX, dY[5], '모먼트인'),
-  aux('D-3', 'personal', DAUX_X, D3y),
-  aux('D-4', 'personal', DAUX_X, D4y),
-  aux('D-5', 'personal', DAUX_X, D5y),
-
-  // ─── Creative Experience (yellow) ───────────────────────────────
-  aux('E-1', 'creative', EAUX_X, E1y),
-  aux('E-2', 'creative', EAUX_X, E2y),
-  aux('E-3', 'creative', EAUX_X, E3y),
-  aux('E-6', 'creative', E6x, E6y, LH),
-  aux('E-5', 'creative', E5x, E45y, LH),
-  aux('E-4', 'creative', E4x, E45y, LH),
-  main('E1', 'creative', eX[0], eY0, '쁘이', V, eLabelOffsetY[0]),
-  main('E2', 'creative', eX[1], eY0, 'Feed or Protect', V, eLabelOffsetY[1]),
-  main('E3', 'creative', eX[2], eY0, '세바스찬', V, eLabelOffsetY[2]),
-  main('E4', 'creative', eX[3], eY0, 'Who is criminal?', V, eLabelOffsetY[3]),
-  main('E5', 'creative', eX[4], eY0, '404 Not Found', V, eLabelOffsetY[4]),
-  main('E6', 'creative', eX[5], eY0, 'NewbieQuest', V, eLabelOffsetY[5]),
-
-  // ─── Journey Experience (purple) ────────────────────────────────
-  main('F6', 'journey', FX, fY[0], 'Mirim OAuth'),
-  main('F5', 'journey', FX, fY[1], 'Plank'),
-  main('F4', 'journey', FX, fY[2], '체크잇'),
-  main('F3', 'journey', FX, fY[3], 'Artifact'),
-  main('F2', 'journey', FX, fY[4], '시장여지도'),
-  main('F1', 'journey', FX, fY[5], 'WIP'),
-  aux('F-1', 'journey', FAUX_X, F1y),
-  aux('F-2', 'journey', FAUX_X, F2y),
-  aux('F-3', 'journey', FAUX_X, F3y),
-  aux('F-4', 'journey', FAUX_X, F4y),
-  aux('F-6', 'journey', F6x, F56y, LH),
-  aux('F-5', 'journey', F5x, F56y, LH),
-
-  // ─── Global Experience (orange) ─────────────────────────────────
-  main('G7', 'global', GX, gY[0], 'Mytsuri'),
-  main('G6', 'global', GX, gY[1], 'PuranPuran'),
-  main('G5', 'global', GX, gY[2], '토모랑'),
-  main('G4', 'global', GX, gY[3], 'RooT'),
-  main('G3', 'global', GX, gY[4], 'WorkIt'),
-  main('G2', 'global', GX, gY[5], 'Trustay'),
-  main('G1', 'global', GX, gY[6], 'Growvy'),
-];
-
-/** Empty / dashed rectangles ("storage" boxes) on the map. */
-export interface EmptySlot {
-  id: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-/**
- * Dashed empty rectangles drawn directly from the reference image.
- * Coordinates are *centres* as fractions of the 763 × 1024 map.
- */
-export const EMPTY_SLOTS: EmptySlot[] = [
-  // Two storage boxes between A column and Human pill (just above AI pill)
-  { id: 'es-ai-l', x: 0.225, y: 0.477, w: 0.04, h: 0.038 },
-  { id: 'es-ai-r', x: 0.275, y: 0.477, w: 0.04, h: 0.038 },
-  // Long horizontal storage corridor below Human pill / above E row
-  { id: 'es-corridor-1', x: 0.357, y: 0.554, w: 0.040, h: 0.060 },
-  { id: 'es-corridor-2', x: 0.4, y: 0.587, w: 0.045, h: 0.030 },
-  // Big lobby strip extending across centre (under Creative pill area)
-  { id: 'es-lobby', x: 0.235, y: 0.605, w: 0.20, h: 0.034 },
-  // Storage below Creative pill / right edge of G column
-  { id: 'es-creative-stub', x: 0.157, y: 0.610, w: 0.058, h: 0.028 },
-  // Long horizontal slot above Journey pill (mid-bottom)
-  { id: 'es-journey-top', x: 0.348, y: 0.695, w: 0.060, h: 0.045 },
-  // Vertical thin slot near the rotated "프로필 E" text (bottom-left)
-  { id: 'es-profile-e', x: 0.298, y: 0.860, w: 0.026, h: 0.070 },
-  // Long horizontal slot just below F-1..F-4 (bottom-right corner)
-  { id: 'es-f-bottom', x: 0.755, y: 0.945, w: 0.10, h: 0.022 },
+export const BOOTHS: readonly Booth[] = [
+  // ai
+  { id:"A6", title:"A6", serviceName:"Tone-Z", categoryId:"ai", color:COLOR.ai, x:0.106399, y:0.212788, w:0.039435, h:0.034067 },
+  { id:"A5", title:"A5", serviceName:"Mony", categoryId:"ai", color:COLOR.ai, x:0.106399, y:0.248428, w:0.039435, h:0.034067 },
+  { id:"A4", title:"A4", serviceName:"오모", categoryId:"ai", color:COLOR.ai, x:0.106399, y:0.284067, w:0.039435, h:0.034067 },
+  { id:"A3", title:"A3", serviceName:"Reco", categoryId:"ai", color:COLOR.ai, x:0.106399, y:0.319706, w:0.039435, h:0.034067 },
+  { id:"A2", title:"A2", serviceName:"무브잇", categoryId:"ai", color:COLOR.ai, x:0.106399, y:0.355346, w:0.039435, h:0.034067 },
+  { id:"A1", title:"A1", serviceName:"MALO", categoryId:"ai", color:COLOR.ai, x:0.106399, y:0.390985, w:0.039435, h:0.034067 },
+  { id:"ai-empty-1", title:"ai-empty-1", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.107887, y:0.453878, w:0.048363, h:0.034067, aux:true },
+  { id:"ai-empty-2", title:"ai-empty-2", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.309524, y:0.362159, w:0.019345, h:0.013627, aux:true },
+  { id:"ai-empty-3", title:"ai-empty-3", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.260417, y:0.269392, w:0.019345, h:0.013627, aux:true },
+  { id:"ai-empty-4", title:"ai-empty-4", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.260417, y:0.202306, w:0.019345, h:0.013627, aux:true },
+  { id:"ai-empty-5", title:"ai-empty-5", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.148810, y:0.127358, w:0.019345, h:0.013627, aux:true },
+  { id:"ai-empty-6", title:"ai-empty-6", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.148810, y:0.058700, w:0.019345, h:0.013627, aux:true },
+  { id:"ai-empty-7", title:"ai-empty-7", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.309524, y:0.376834, w:0.019345, h:0.013627, aux:true },
+  { id:"ai-empty-8", title:"ai-empty-8", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.260417, y:0.284067, w:0.019345, h:0.013627, aux:true },
+  { id:"ai-empty-9", title:"ai-empty-9", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.260417, y:0.216981, w:0.019345, h:0.013627, aux:true },
+  { id:"ai-empty-10", title:"ai-empty-10", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.148810, y:0.142034, w:0.019345, h:0.013627, aux:true },
+  { id:"ai-empty-11", title:"ai-empty-11", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.148810, y:0.073375, w:0.019345, h:0.013627, aux:true },
+  { id:"ai-empty-12", title:"ai-empty-12", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.309524, y:0.391509, w:0.019345, h:0.013627, aux:true },
+  { id:"ai-empty-13", title:"ai-empty-13", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.260417, y:0.298742, w:0.019345, h:0.013627, aux:true },
+  { id:"ai-empty-14", title:"ai-empty-14", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.260417, y:0.231656, w:0.019345, h:0.013627, aux:true },
+  { id:"ai-empty-15", title:"ai-empty-15", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.148810, y:0.156709, w:0.019345, h:0.013627, aux:true },
+  { id:"ai-empty-16", title:"ai-empty-16", serviceName:"", categoryId:"ai", color:COLOR.ai, x:0.148810, y:0.088050, w:0.019345, h:0.013627, aux:true },
+  // human
+  { id:"B4", title:"B4", serviceName:"MAKO", categoryId:"human", color:COLOR.human, x:0.363095, y:0.244759, w:0.039435, h:0.034067 },
+  { id:"B3", title:"B3", serviceName:"SafeShield", categoryId:"human", color:COLOR.human, x:0.363095, y:0.280398, w:0.039435, h:0.034067 },
+  { id:"B2", title:"B2", serviceName:"Dear Me;Dear You", categoryId:"human", color:COLOR.human, x:0.363095, y:0.316038, w:0.039435, h:0.034067 },
+  { id:"B1", title:"B1", serviceName:"Naru", categoryId:"human", color:COLOR.human, x:0.363095, y:0.351677, w:0.039435, h:0.034067 },
+  { id:"human-empty-1", title:"human-empty-1", serviceName:"", categoryId:"human", color:COLOR.human, x:0.363095, y:0.453878, w:0.048363, h:0.034067, aux:true },
+  { id:"human-empty-2", title:"human-empty-2", serviceName:"", categoryId:"human", color:COLOR.human, x:0.488839, y:0.238994, w:0.019345, h:0.013627, aux:true },
+  { id:"human-empty-3", title:"human-empty-3", serviceName:"", categoryId:"human", color:COLOR.human, x:0.537202, y:0.333333, w:0.019345, h:0.013627, aux:true },
+  { id:"human-empty-4", title:"human-empty-4", serviceName:"", categoryId:"human", color:COLOR.human, x:0.488839, y:0.172956, w:0.019345, h:0.013627, aux:true },
+  { id:"human-empty-5", title:"human-empty-5", serviceName:"", categoryId:"human", color:COLOR.human, x:0.287202, y:0.031971, w:0.019345, h:0.013627, aux:true },
+  { id:"human-empty-6", title:"human-empty-6", serviceName:"", categoryId:"human", color:COLOR.human, x:0.381696, y:0.031971, w:0.019345, h:0.013627, aux:true },
+  { id:"human-empty-7", title:"human-empty-7", serviceName:"", categoryId:"human", color:COLOR.human, x:0.488839, y:0.253669, w:0.019345, h:0.013627, aux:true },
+  { id:"human-empty-8", title:"human-empty-8", serviceName:"", categoryId:"human", color:COLOR.human, x:0.537202, y:0.348008, w:0.019345, h:0.013627, aux:true },
+  { id:"human-empty-9", title:"human-empty-9", serviceName:"", categoryId:"human", color:COLOR.human, x:0.488839, y:0.187631, w:0.019345, h:0.013627, aux:true },
+  { id:"human-empty-10", title:"human-empty-10", serviceName:"", categoryId:"human", color:COLOR.human, x:0.266369, y:0.031971, w:0.019345, h:0.013627, aux:true },
+  { id:"human-empty-11", title:"human-empty-11", serviceName:"", categoryId:"human", color:COLOR.human, x:0.360863, y:0.031971, w:0.019345, h:0.013627, aux:true },
+  { id:"human-empty-12", title:"human-empty-12", serviceName:"", categoryId:"human", color:COLOR.human, x:0.488839, y:0.268344, w:0.019345, h:0.013627, aux:true },
+  { id:"human-empty-13", title:"human-empty-13", serviceName:"", categoryId:"human", color:COLOR.human, x:0.537202, y:0.362683, w:0.019345, h:0.013627, aux:true },
+  { id:"human-empty-14", title:"human-empty-14", serviceName:"", categoryId:"human", color:COLOR.human, x:0.488839, y:0.202306, w:0.019345, h:0.013627, aux:true },
+  { id:"human-empty-15", title:"human-empty-15", serviceName:"", categoryId:"human", color:COLOR.human, x:0.245536, y:0.031971, w:0.019345, h:0.013627, aux:true },
+  { id:"human-empty-16", title:"human-empty-16", serviceName:"", categoryId:"human", color:COLOR.human, x:0.340030, y:0.031971, w:0.019345, h:0.013627, aux:true },
+  // network
+  { id:"C6", title:"C6", serviceName:"OVLY", categoryId:"network", color:COLOR.network, x:0.577381, y:0.176625, w:0.039435, h:0.034067 },
+  { id:"C5", title:"C5", serviceName:"Star Spot", categoryId:"network", color:COLOR.network, x:0.577381, y:0.212264, w:0.039435, h:0.034067 },
+  { id:"C4", title:"C4", serviceName:"정명", categoryId:"network", color:COLOR.network, x:0.577381, y:0.247904, w:0.039435, h:0.034067 },
+  { id:"C3", title:"C3", serviceName:"AdMatch", categoryId:"network", color:COLOR.network, x:0.577381, y:0.283543, w:0.039435, h:0.034067 },
+  { id:"C2", title:"C2", serviceName:"Survly", categoryId:"network", color:COLOR.network, x:0.577381, y:0.319182, w:0.039435, h:0.034067 },
+  { id:"C1", title:"C1", serviceName:"이음", categoryId:"network", color:COLOR.network, x:0.577381, y:0.354822, w:0.039435, h:0.034067 },
+  { id:"network-empty-1", title:"network-empty-1", serviceName:"", categoryId:"network", color:COLOR.network, x:0.577381, y:0.419811, w:0.048363, h:0.034067, aux:true },
+  { id:"network-empty-2", title:"network-empty-2", serviceName:"", categoryId:"network", color:COLOR.network, x:0.479167, y:0.031971, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-3", title:"network-empty-3", serviceName:"", categoryId:"network", color:COLOR.network, x:0.587054, y:0.031971, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-4", title:"network-empty-4", serviceName:"", categoryId:"network", color:COLOR.network, x:0.751488, y:0.362683, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-5", title:"network-empty-5", serviceName:"", categoryId:"network", color:COLOR.network, x:0.703125, y:0.268344, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-6", title:"network-empty-6", serviceName:"", categoryId:"network", color:COLOR.network, x:0.703125, y:0.202306, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-7", title:"network-empty-7", serviceName:"", categoryId:"network", color:COLOR.network, x:0.458333, y:0.031971, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-8", title:"network-empty-8", serviceName:"", categoryId:"network", color:COLOR.network, x:0.566220, y:0.031971, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-9", title:"network-empty-9", serviceName:"", categoryId:"network", color:COLOR.network, x:0.751488, y:0.348008, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-10", title:"network-empty-10", serviceName:"", categoryId:"network", color:COLOR.network, x:0.703125, y:0.253669, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-11", title:"network-empty-11", serviceName:"", categoryId:"network", color:COLOR.network, x:0.703125, y:0.187631, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-12", title:"network-empty-12", serviceName:"", categoryId:"network", color:COLOR.network, x:0.437500, y:0.031971, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-13", title:"network-empty-13", serviceName:"", categoryId:"network", color:COLOR.network, x:0.545387, y:0.031971, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-14", title:"network-empty-14", serviceName:"", categoryId:"network", color:COLOR.network, x:0.751488, y:0.333333, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-15", title:"network-empty-15", serviceName:"", categoryId:"network", color:COLOR.network, x:0.703125, y:0.238994, w:0.019345, h:0.013627, aux:true },
+  { id:"network-empty-16", title:"network-empty-16", serviceName:"", categoryId:"network", color:COLOR.network, x:0.703125, y:0.172956, w:0.019345, h:0.013627, aux:true },
+  // personal
+  { id:"D6", title:"D6", serviceName:"이상형.zip", categoryId:"personal", color:COLOR.personal, x:0.792411, y:0.177149, w:0.039435, h:0.034067 },
+  { id:"D5", title:"D5", serviceName:"Mikura", categoryId:"personal", color:COLOR.personal, x:0.792411, y:0.212788, w:0.039435, h:0.034067 },
+  { id:"D4", title:"D4", serviceName:"Ribumi", categoryId:"personal", color:COLOR.personal, x:0.792411, y:0.248428, w:0.039435, h:0.034067 },
+  { id:"D3", title:"D3", serviceName:"애인 사주오!", categoryId:"personal", color:COLOR.personal, x:0.792411, y:0.284067, w:0.039435, h:0.034067 },
+  { id:"D2", title:"D2", serviceName:"더그아웃", categoryId:"personal", color:COLOR.personal, x:0.792411, y:0.319706, w:0.039435, h:0.034067 },
+  { id:"D1", title:"D1", serviceName:"모먼트인", categoryId:"personal", color:COLOR.personal, x:0.792411, y:0.355346, w:0.039435, h:0.034067 },
+  { id:"personal-empty-1", title:"personal-empty-1", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.916667, y:0.248967, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-2", title:"personal-empty-2", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.916667, y:0.179444, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-3", title:"personal-empty-3", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.796875, y:0.049501, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-4", title:"personal-empty-4", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.916667, y:0.110786, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-5", title:"personal-empty-5", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.700893, y:0.049501, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-6", title:"personal-empty-6", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.916667, y:0.234292, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-7", title:"personal-empty-7", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.916667, y:0.164769, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-8", title:"personal-empty-8", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.776042, y:0.049501, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-9", title:"personal-empty-9", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.916667, y:0.096111, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-10", title:"personal-empty-10", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.680060, y:0.049501, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-11", title:"personal-empty-11", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.916667, y:0.219617, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-12", title:"personal-empty-12", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.916667, y:0.150094, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-13", title:"personal-empty-13", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.755208, y:0.049501, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-14", title:"personal-empty-14", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.916667, y:0.081436, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-15", title:"personal-empty-15", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.659226, y:0.049501, w:0.019345, h:0.013627, aux:true },
+  { id:"personal-empty-16", title:"personal-empty-16", serviceName:"", categoryId:"personal", color:COLOR.personal, x:0.792411, y:0.419287, w:0.048363, h:0.034067, aux:true },
+  // creative
+  { id:"E1", title:"E1", serviceName:"쁘이", categoryId:"creative", color:COLOR.creative, x:0.710193, y:0.591457, w:0.048363, h:0.027778 },
+  { id:"E2", title:"E2", serviceName:"Feed or Protect", categoryId:"creative", color:COLOR.creative, x:0.760789, y:0.591457, w:0.048363, h:0.027778 },
+  { id:"E3", title:"E3", serviceName:"세바스찬", categoryId:"creative", color:COLOR.creative, x:0.811384, y:0.591457, w:0.048363, h:0.027778 },
+  { id:"E4", title:"E4", serviceName:"Who is criminal?", categoryId:"creative", color:COLOR.creative, x:0.861979, y:0.591457, w:0.048363, h:0.027778 },
+  { id:"E5", title:"E5", serviceName:"404 Not Found", categoryId:"creative", color:COLOR.creative, x:0.912574, y:0.591457, w:0.048363, h:0.027778 },
+  { id:"E6", title:"E6", serviceName:"NewbieQuest", categoryId:"creative", color:COLOR.creative, x:0.963170, y:0.591457, w:0.048363, h:0.027778 },
+  { id:"creative-empty-1", title:"creative-empty-1", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.916667, y:0.549266, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-2", title:"creative-empty-2", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.916667, y:0.473271, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-3", title:"creative-empty-3", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.916667, y:0.397275, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-4", title:"creative-empty-4", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.836310, y:0.546122, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-5", title:"creative-empty-5", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.738095, y:0.546122, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-6", title:"creative-empty-6", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.643601, y:0.563941, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-7", title:"creative-empty-7", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.916667, y:0.534591, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-8", title:"creative-empty-8", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.916667, y:0.458595, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-9", title:"creative-empty-9", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.916667, y:0.382600, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-10", title:"creative-empty-10", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.857143, y:0.546122, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-11", title:"creative-empty-11", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.758929, y:0.546122, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-12", title:"creative-empty-12", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.664435, y:0.563941, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-13", title:"creative-empty-13", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.916667, y:0.519916, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-14", title:"creative-empty-14", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.916667, y:0.443920, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-15", title:"creative-empty-15", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.916667, y:0.367925, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-16", title:"creative-empty-16", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.877976, y:0.546122, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-17", title:"creative-empty-17", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.779762, y:0.546122, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-18", title:"creative-empty-18", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.685268, y:0.563941, w:0.019345, h:0.013627, aux:true },
+  { id:"creative-empty-19", title:"creative-empty-19", serviceName:"", categoryId:"creative", color:COLOR.creative, x:0.604911, y:0.592243, w:0.048363, h:0.034067, aux:true },
+  // journey
+  { id:"F6", title:"F6", serviceName:"Mirim OAuth", categoryId:"journey", color:COLOR.journey, x:JOURNEY_STACK_X, y:0.709759, w:0.039435, h:0.034067 },
+  { id:"F5", title:"F5", serviceName:"Plank", categoryId:"journey", color:COLOR.journey, x:JOURNEY_STACK_X, y:0.745398, w:0.039435, h:0.034067 },
+  { id:"F4", title:"F4", serviceName:"체크잇", categoryId:"journey", color:COLOR.journey, x:JOURNEY_STACK_X, y:0.781038, w:0.039435, h:0.034067 },
+  { id:"F3", title:"F3", serviceName:"Artifact", categoryId:"journey", color:COLOR.journey, x:JOURNEY_STACK_X, y:0.816677, w:0.039435, h:0.034067 },
+  { id:"F2", title:"F2", serviceName:"시장여지도", categoryId:"journey", color:COLOR.journey, x:JOURNEY_STACK_X, y:0.852317, w:0.039435, h:0.034067 },
+  { id:"F1", title:"F1", serviceName:"WIP", categoryId:"journey", color:COLOR.journey, x:JOURNEY_STACK_X, y:0.887956, w:0.039435, h:0.034067 },
+  { id:"journey-empty-1", title:"journey-empty-1", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.773065, y:JOURNEY_BOTTOM_AUX_Y, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-2", title:"journey-empty-2", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.869048, y:JOURNEY_BOTTOM_AUX_Y, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-3", title:"journey-empty-3", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.882075, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-4", title:"journey-empty-4", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.742662, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-5", title:"journey-empty-5", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.812369, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-6", title:"journey-empty-6", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.672956, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-7", title:"journey-empty-7", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.793899, y:JOURNEY_BOTTOM_AUX_Y, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-8", title:"journey-empty-8", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.889881, y:JOURNEY_BOTTOM_AUX_Y, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-9", title:"journey-empty-9", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.896751, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-10", title:"journey-empty-10", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.757338, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-11", title:"journey-empty-11", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.827044, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-12", title:"journey-empty-12", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.687631, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-13", title:"journey-empty-13", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.814732, y:JOURNEY_BOTTOM_AUX_Y, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-14", title:"journey-empty-14", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.910714, y:JOURNEY_BOTTOM_AUX_Y, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-15", title:"journey-empty-15", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.911426, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-16", title:"journey-empty-16", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.772013, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-17", title:"journey-empty-17", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.841719, w:0.019345, h:0.013627, aux:true },
+  { id:"journey-empty-18", title:"journey-empty-18", serviceName:"", categoryId:"journey", color:COLOR.journey, x:0.956845, y:0.702306, w:0.019345, h:0.013627, aux:true },
+  // global
+  { id:"G7", title:"G7", serviceName:"Mytsuri", categoryId:"global", color:COLOR.global, x:0.061012, y:0.495283, w:0.039435, h:0.034067 },
+  { id:"G6", title:"G6", serviceName:"PuranPuran", categoryId:"global", color:COLOR.global, x:0.061012, y:0.530922, w:0.039435, h:0.034067 },
+  { id:"G5", title:"G5", serviceName:"토모랑", categoryId:"global", color:COLOR.global, x:0.061012, y:0.566562, w:0.039435, h:0.034067 },
+  { id:"G4", title:"G4", serviceName:"RooT", categoryId:"global", color:COLOR.global, x:0.061012, y:0.602201, w:0.039435, h:0.034067 },
+  { id:"G3", title:"G3", serviceName:"WorkIt", categoryId:"global", color:COLOR.global, x:0.061012, y:0.637841, w:0.039435, h:0.034067 },
+  { id:"G2", title:"G2", serviceName:"Trustay", categoryId:"global", color:COLOR.global, x:0.061012, y:0.673480, w:0.039435, h:0.034067 },
+  { id:"G1", title:"G1", serviceName:"Growvy", categoryId:"global", color:COLOR.global, x:0.061012, y:0.709119, w:0.039435, h:0.034067 },
+  { id:"global-empty-1", title:"global-empty-1", serviceName:"", categoryId:"global", color:COLOR.global, x:0.059524, y:0.765723, w:0.048363, h:0.034067, aux:true },
 ];

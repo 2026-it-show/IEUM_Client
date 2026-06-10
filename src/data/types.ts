@@ -44,6 +44,7 @@ export interface ProjectListItem {
   name: string;
   thumbnail: string;
   group: 'SW' | 'DE';
+  boothSlot?: string;
 }
 
 export type TeamMemberRole = 'BE' | 'FE' | 'DE';

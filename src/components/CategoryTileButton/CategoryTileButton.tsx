@@ -1,45 +1,26 @@
-import { Fragment } from 'react';
 import type { ButtonHTMLAttributes, CSSProperties } from 'react';
 import * as S from './CategoryTileButton.styled';
 
 interface CategoryTileButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement> {
-  /** Background fill of the tile (category color) */
   color: string;
-  /** Booth code label, e.g. "A1", "B-2" */
   label: string;
-  /** Service name to show when the map is zoomed in */
   serviceName?: string;
-  /** Show service name instead of label */
   showServiceName?: boolean;
-  /**
-   * Optional vertical nudge of the LABEL only (the booth body stays in its
-   * single row). Used by the E-row so adjacent service-name labels can
-   * alternate above/below and never run into each other.
-   */
+  showLabel?: boolean;
+  hitboxOnly?: boolean;
+  serviceOrientation?: 'horizontal' | 'vertical';
   labelOffsetY?: number;
 }
 
-/** Split a service name into individual words rendered on their own line. */
-function renderMultilineName(name: string) {
-  const words = name.split(/\s+/).filter(Boolean);
-  return words.map((word, i) => (
-    <Fragment key={`${i}-${word}`}>
-      {i > 0 && <br />}
-      {word}
-    </Fragment>
-  ));
-}
-
-/**
- * Booth-shaped clickable tile that visually replaces the
- * coloured rectangles on the map.
- */
 function CategoryTileButton({
   color,
   label,
   serviceName,
   showServiceName = false,
+  showLabel = true,
+  hitboxOnly = false,
+  serviceOrientation = 'horizontal',
   labelOffsetY,
   ...rest
 }: CategoryTileButtonProps) {
@@ -50,14 +31,24 @@ function CategoryTileButton({
       : undefined;
 
   return (
-    <S.TileButton type="button" $color={color} {...rest}>
+    <S.TileButton
+      type="button"
+      $color={color}
+      $hitboxOnly={hitboxOnly}
+      $clipLabel={displayServiceName}
+      {...rest}
+    >
       {displayServiceName ? (
-        <S.TileLabelService style={labelStyle}>
-          {renderMultilineName(serviceName!)}
+        <S.TileLabelService
+          $orientation={serviceOrientation}
+          style={labelStyle}
+        >
+          <S.TileLabelCode>{label}</S.TileLabelCode>
+          <S.TileLabelName>{serviceName}</S.TileLabelName>
         </S.TileLabelService>
-      ) : (
+      ) : showLabel ? (
         <S.TileLabel style={labelStyle}>{label}</S.TileLabel>
-      )}
+      ) : null}
     </S.TileButton>
   );
 }

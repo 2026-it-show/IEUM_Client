@@ -9,6 +9,7 @@ interface CategoryPillButtonProps
   title: string;
   /** Subtitle text e.g. "Experience" */
   subtitle?: string;
+  hitboxOnly?: boolean;
 }
 
 /**
@@ -19,10 +20,16 @@ function CategoryPillButton({
   color,
   title,
   subtitle = 'Experience',
+  hitboxOnly = false,
   ...rest
 }: CategoryPillButtonProps) {
   return (
-    <S.PillButton type="button" $color={color} {...rest}>
+    <S.PillButton
+      type="button"
+      $color={color}
+      $hitboxOnly={hitboxOnly}
+      {...rest}
+    >
       <S.PillTitle>{title}</S.PillTitle>
       {subtitle ? <S.PillSubtitle>{subtitle}</S.PillSubtitle> : null}
     </S.PillButton>

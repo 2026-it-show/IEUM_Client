@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'; // 💡 useEffect 추가
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { withSurveyReturnTo } from '@/utils/surveyReturn';
 
 // --- 데이터 정의 ---
 interface AgeOption {
@@ -20,31 +21,30 @@ const AGE_OPTIONS: AgeOption[] = [
 
 const PageWrapper = styled.div`
   width: 100%;
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   background-color: #ffffff;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 `;
 
 const MobileContainer = styled.div`
-  width: 390px;
-  height: 844px;
+  width: 100%;
+  height: 100%;
   background-color: #ffffff;
   position: relative; 
   margin: 0 auto;
   box-sizing: border-box;
-`;
-
-const NavImage = styled.img`
-  width: 390px;
-  height: 48px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 10;
+  overflow: hidden;
 `;
 
 const BackIcon = styled.img`
   position: absolute;
-  top: 65px;
+  top: 17px;
   left: 24px;
   width: 17px;
   height: 34px;
@@ -54,9 +54,9 @@ const BackIcon = styled.img`
 
 const ProgressBarContainer = styled.div`
   position: absolute;
-  top: 79px;
+  top: clamp(24px, 3.7dvh, 31px);
   left: 57px;
-  width: 309px;
+  right: 24px;
   height: 6px;
   background-color: #E9E9E9;
   border-radius: 3px;
@@ -73,29 +73,36 @@ const ProgressBarFill = styled.div<{ $width: number }>`
 
 const Title = styled.h1`
   position: absolute;
-  top: 112px;
-  left: 76px; 
+  top: clamp(52px, 7.6dvh, 64px);
+  left: 24px;
+  right: 24px;
   font-family: 'Gmarket Sans', sans-serif;
   font-size: 24px;
   font-weight: 500; 
   color: #222222;
   margin: 0;
+  text-align: center;
 `;
 
 const OptionsContainer = styled.div`
   position: absolute;
-  top: 182px; 
+  top: clamp(112px, 15.9dvh, 134px);
   left: 24px;
+  right: 24px;
   display: flex;
   flex-direction: column;
-  gap: 12px; 
+  gap: clamp(9px, 1.4dvh, 12px);
 `;
 
 const CardBox = styled.div<{ $isSelected: boolean }>`
-  width: 342px;
-  height: 91px;
+  width: 100%;
+  height: clamp(76px, 10.8dvh, 91px);
   border-radius: 12px;
-  position: relative; 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 28px;
   box-sizing: border-box;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
@@ -109,9 +116,6 @@ const CardTitle = styled.span`
   font-size: 20px;
   font-weight: 500;
   color: #222222;
-  position: absolute;
-  left: 28px;
-  top: 23px;
   line-height: 1;
 `;
 
@@ -119,17 +123,14 @@ const CardRange = styled.span`
   font-family: 'Gmarket Sans', sans-serif;
   font-size: 14px;
   color: #555555;
-  position: absolute;
-  left: 28px;
-  top: 53px;
   line-height: 1;
 `;
 
 const NextButton = styled.button<{ $isActive: boolean }>`
   position: absolute;
-  bottom: 29px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   left: 24px;
-  width: 342px;
+  right: 24px;
   height: 52px;
   border-radius: 12px;
   border: none;
@@ -163,12 +164,11 @@ const Age: React.FC = () => {
   return (
     <PageWrapper>
       <MobileContainer>
-        <NavImage src="/assets/nav.svg" alt="Navigation Bar" />
-
         <BackIcon
           src="/assets/icons/back_icon.svg"
           alt="Back"
-          onClick={() => navigate('/survey/information')}
+          draggable={false}
+          onClick={() => navigate(withSurveyReturnTo('/survey/information'))}
         />
 
         <ProgressBarContainer>
@@ -194,7 +194,7 @@ const Age: React.FC = () => {
         <NextButton 
           $isActive={selectedId !== null}
           disabled={selectedId === null}
-          onClick={() => navigate('/survey/gender')} 
+          onClick={() => navigate(withSurveyReturnTo('/survey/gender'))} 
         >
           다음
         </NextButton>

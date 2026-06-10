@@ -12,24 +12,54 @@ const resolveColor = (
   dark: string,
 ): string => (variant === 'light' ? light : dark);
 
-export const Header = styled.header`
+export const Header = styled.header<{ $compact: boolean }>`
   display: flex;
   align-items: center;
-  padding: 60px ${({ theme }) => theme.layout.pagePadding} 0;
+  min-height: ${({ $compact }) => ($compact ? '80px' : '62px')};
+  padding: 0 ${({ theme }) => theme.layout.pagePadding};
   flex-shrink: 0;
+`;
+
+export const AppBar = styled.div<{ $surface: 'default' | 'scan' }>`
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  flex-shrink: 0;
+  background-color: ${({ theme, $surface }) =>
+    $surface === 'scan' ? theme.colors.bgPlaceholder : theme.colors.white};
 `;
 
 export const BackButton = styled.button<VariantProps>`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
   padding: 0;
   color: ${({ theme, $color }) =>
     resolveColor($color, theme.colors.white, theme.colors.black)};
 `;
 
+export const BackIcon = styled.img<VariantProps>`
+  width: 17px;
+  height: 34px;
+  filter: ${({ $color }) => ($color === 'light' ? 'brightness(0) invert(1)' : 'none')};
+`;
+
 export const Title = styled.span`
-  font-size: 16px;
+  font-size: 22px;
+  font-weight: 700;
   line-height: 1;
   color: inherit;
+`;
+
+export const Band = styled.div<{ $background: string }>`
+  width: 100%;
+  height: 37px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: ${({ $background }) => $background};
+  color: ${({ theme }) => theme.colors.black};
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: 0;
 `;

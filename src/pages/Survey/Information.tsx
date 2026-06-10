@@ -1,38 +1,38 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { withSurveyReturnTo } from '@/utils/surveyReturn';
 
 // --- 스타일드 컴포넌트 ---
 
 const PageWrapper = styled.div`
   width: 100%;
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   background-color: #ffffff;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 `;
 
 const MobileContainer = styled.div`
-  width: 390px;
-  height: 844px;
+  width: 100%;
+  height: 100%;
   background-color: #ffffff;
   position: relative; 
   margin: 0 auto;
   box-sizing: border-box;
-`;
-
-const NavImage = styled.img`
-  width: 390px;
-  height: 48px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 10;
+  overflow: hidden;
 `;
 
 const Title = styled.h1`
   position: absolute;
-  top: 112px;
+  top: clamp(48px, 7.6dvh, 64px);
   left: 24px;
-  width: 342px;
+  right: 24px;
   font-family: 'Gmarket Sans', sans-serif;
   font-size: 24px;
   font-weight: medium;
@@ -45,10 +45,10 @@ const Title = styled.h1`
 // 전체 동의 박스
 const AgreementBox = styled.div<{ $isChecked: boolean }>`
   position: absolute;
-  top: 230px; 
+  top: clamp(150px, 21.6dvh, 182px);
   left: 24px;
-  width: 342px;
-  height: 91px;
+  right: 24px;
+  height: clamp(76px, 10.8dvh, 91px);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -68,9 +68,9 @@ const AgreementText = styled.span`
 
 const LinkListContainer = styled.div`
   position: absolute;
-  top: 349px; /* 박스 하단 정렬 */
+  top: clamp(254px, 35.7dvh, 301px);
   left: 36px;
-  width: 342px;
+  right: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -98,10 +98,10 @@ const LinkText = styled.span`
 
 const NextButton = styled.button<{ $isChecked: boolean }>`
   position: absolute;
-  bottom: 29px; 
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   left: 24px;
-  width: 342px;
-  height: 55px;
+  right: 24px;
+  height: clamp(52px, 6.5dvh, 55px);
   border-radius: 12px;
   border: none;
   font-size: 20px;
@@ -125,9 +125,6 @@ const Information: React.FC = () => {
   return (
     <PageWrapper>
       <MobileContainer>
-        {/* 상단 내비게이션 바 */}
-        <NavImage src="/assets/nav.svg" alt="Navigation Bar" />
-
         {/* 메인 타이틀 */}
         <Title>{`서비스 이용을 위한\n약관에 동의해주세요`}</Title>
 
@@ -138,12 +135,12 @@ const Information: React.FC = () => {
 
         {/* 개별 약관 링크 리스트 */}
         <LinkListContainer>
-          <LinkItem onClick={() => navigate('/survey/agreement1')}>
+          <LinkItem onClick={() => navigate(withSurveyReturnTo('/survey/agreement1'))}>
             <CheckIcon $isChecked={isChecked}>✓</CheckIcon>
             <LinkText>[필수] 설문 응답 및 개인정보 수집·이용 동의</LinkText>
           </LinkItem>
           
-          <LinkItem onClick={() => navigate('/survey/agreement2')}>
+          <LinkItem onClick={() => navigate(withSurveyReturnTo('/survey/agreement2'))}>
             <CheckIcon $isChecked={isChecked}>✓</CheckIcon>
             <LinkText>[필수] 개인정보 제3자 제공 동의</LinkText>
           </LinkItem>
@@ -153,7 +150,7 @@ const Information: React.FC = () => {
         <NextButton 
           $isChecked={isChecked} 
           disabled={!isChecked}
-          onClick={() => navigate('/survey/age')} // 다음 진행 경로가 있다면 수정해 주세요.
+          onClick={() => navigate(withSurveyReturnTo('/survey/age'))}
         >
           다음
         </NextButton>

@@ -8,6 +8,17 @@ export const Page = styled.div`
   min-height: 100%;
   background-color: #ffffff;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+
+  * {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  img {
+    -webkit-user-drag: none;
+  }
 `;
 
 export const Header = styled.header`
@@ -27,8 +38,9 @@ export const HeaderItem = styled.div`
 `;
 
 export const Logo = styled.img`
-  height: 22px;
-  width: auto;
+  width: 97px;
+  height: 20px;
+  pointer-events: none;
 `;
 
 export const StopBadge = styled.span`
@@ -65,6 +77,16 @@ export const ImageGroup = styled.div`
   will-change: transform;
 `;
 
+export const EmptyBooth = styled.div<{ $color: string }>`
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  background: ${({ $color }) => $color};
+  pointer-events: none;
+`;
+
 /** Overlay layer for fixed-size pills (positioned in Stage screen space). */
 export const PillLayer = styled.div`
   position: absolute;
@@ -79,8 +101,8 @@ export const PillLayer = styled.div`
 
 export const QrFab = styled.button`
   position: absolute;
-  right: 16px;
-  bottom: 24px;
+  right: 31px;
+  bottom: 31px;
   z-index: 6;
   width: 55px;
   height: 50px;

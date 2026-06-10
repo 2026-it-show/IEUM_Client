@@ -2,10 +2,13 @@ import styled, { css } from 'styled-components';
 
 interface ColorProps {
   $color: string;
+  $hitboxOnly: boolean;
+  $clipLabel: boolean;
 }
 
 const baseTile = css`
   position: absolute;
+  z-index: 2;
   padding: 0;
   margin: 0;
   border: 0;
@@ -17,12 +20,6 @@ const baseTile = css`
   transition: filter 140ms ease;
   appearance: none;
   background: transparent;
-  /**
-   * Booth bodies are very small (down to 11px wide for "long" verticals)
-   * so labels would otherwise be clipped.  We let them flow OUTSIDE the
-   * coloured rectangle and rely on the text-stroke below for legibility
-   * on the white background.
-   */
   overflow: visible;
 `;
 
@@ -30,12 +27,15 @@ export const TileButton = styled.button<ColorProps>`
   ${baseTile};
   background: ${({ $color }) => $color};
   color: #ffffff;
-  /* User requirement: no rounded corners on booth rectangles */
   border-radius: 0;
+  overflow: hidden;
 
-  &:hover,
+  &:hover {
+    filter: brightness(1.08);
+  }
+
   &:focus-visible {
-    filter: brightness(1.12);
+    filter: brightness(1.08);
     outline: none;
   }
 
@@ -47,50 +47,94 @@ export const TileButton = styled.button<ColorProps>`
   &[aria-pressed='true'] {
     filter: brightness(1.18);
   }
+
+  ${({ $hitboxOnly }) =>
+    $hitboxOnly
+      ? css`
+          background: transparent;
+          color: transparent;
+
+          &:hover,
+          &:active {
+            filter: none;
+          }
+
+          &:focus-visible {
+            outline: 2px solid rgba(78, 62, 133, 0.7);
+            outline-offset: 2px;
+          }
+        `
+      : null}
 `;
 
-/**
- * Centred floating label.  Uses `position: absolute` so it can grow past
- * the booth's coloured body without breaking layout, and a contrast stroke
- * (`paint-order: stroke fill`) so the white glyphs stay legible whether they
- * land on the coloured tile or on the white background outside.
- */
 export const TileLabel = styled.span`
   position: absolute;
   top: 50%;
   left: 50%;
-  /* --lbl-offset-y lets specific booths nudge their label above or below
-     the booth's geometric centre (used by the E-row in a zig-zag so the
-     long service-names never collide horizontally). */
   transform: translate(-50%, calc(-50% + var(--lbl-offset-y, 0px)));
   width: max-content;
   max-width: none;
   color: #ffffff;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
   text-align: center;
   white-space: nowrap;
   pointer-events: none;
-  /* dual-readability halo */
   -webkit-text-stroke: 2px rgba(60, 60, 67, 0.55);
   paint-order: stroke fill;
   text-shadow: 0 0 2px rgba(0, 0, 0, 0.25);
 `;
 
-/**
- * Service-name label shown when the user zooms in.
- *
- * Words are rendered on their own lines (CategoryTileButton inserts a <br>
- * at every space) so a long name like "Feed or Protect" stacks vertically
- * instead of running into adjacent booth labels.
- */
-export const TileLabelService = styled(TileLabel)`
-  font-size: 8px;
-  line-height: 1.05;
-  white-space: normal;
-  -webkit-text-stroke: 1.6px rgba(40, 40, 48, 0.6);
+export const TileLabelService = styled.span<{
+  $orientation: 'horizontal' | 'vertical';
+}>`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+  max-width: calc(100% - 6px);
+  max-height: calc(100% - 6px);
+  transform: ${({ $orientation }) =>
+    $orientation === 'vertical'
+      ? 'translate(-50%, -50%) rotate(-90deg)'
+      : 'translate(-50%, -50%)'};
+  transform-origin: center;
+  letter-spacing: 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  overflow: hidden;
+  pointer-events: none;
+  color: #ffffff;
+  -webkit-text-stroke: 2px rgba(60, 60, 67, 0.58);
+  paint-order: stroke fill;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.22);
+`;
+
+export const TileLabelCode = styled.span`
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: clip;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+`;
+
+export const TileLabelName = styled.span`
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: clip;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
 `;
 
 export const VisuallyHidden = styled.span`
