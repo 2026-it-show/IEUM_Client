@@ -168,7 +168,7 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
         {isCardDetected ? '명함을 인식했어요' : '명함을 찾는 중'}
       </S.StatusText>
       {errorMessage ? <S.ErrorText>{errorMessage}</S.ErrorText> : null}
-      <canvas ref={canvasRef} hidden />
+      <S.HiddenCanvas ref={canvasRef} aria-hidden="true" />
     </S.Wrapper>
   );
 }

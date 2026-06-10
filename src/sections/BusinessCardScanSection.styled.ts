@@ -69,3 +69,13 @@ export const ErrorText = styled.p`
   line-height: 1.4;
   text-align: center;
 `;
+
+export const HiddenCanvas = styled.canvas`
+  position: fixed;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  display: none !important;
+`;
