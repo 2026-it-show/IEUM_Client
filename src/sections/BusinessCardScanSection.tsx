@@ -4,6 +4,7 @@ import {
   type IeumVisitorProfile,
 } from '@/api/ieumApi';
 import type { BusinessCard } from '@/data';
+import { detectBusinessCardFromImageData } from '@/utils/businessCardDetection';
 import * as S from './BusinessCardScanSection.styled';
 
 interface BusinessCardScanResult {
@@ -22,10 +23,11 @@ const CAMERA_CONSTRAINTS: MediaStreamConstraints = {
   audio: false,
 };
 
-const AUTO_CAPTURE_DELAY_MS: Record<ScanStep, number> = {
-  front: 1800,
-  back: 2400,
-};
+const DETECTION_INTERVAL_MS = 220;
+const REQUIRED_STABLE_DETECTIONS = 4;
+const DETECTION_SAMPLE_WIDTH = 176;
+const DETECTION_SAMPLE_HEIGHT = 112;
+const DETECTION_COOLDOWN_MS = 900;
 
 function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -33,9 +35,12 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
   const streamRef = useRef<MediaStream | null>(null);
   const frontFileRef = useRef<File | null>(null);
   const isCapturingRef = useRef(false);
+  const stableDetectionCountRef = useRef(0);
+  const lastCaptureAtRef = useRef(0);
   const [step, setStep] = useState<ScanStep>('front');
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCardDetected, setIsCardDetected] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -93,6 +98,8 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
     if (step === 'front') {
       frontFileRef.current = file;
       setStep('back');
+      setIsCardDetected(false);
+      stableDetectionCountRef.current = 0;
       setErrorMessage(null);
       return;
     }
@@ -119,12 +126,30 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
   }, [handleCapturedFile, isUploading, step]);
 
   useEffect(() => {
+    stableDetectionCountRef.current = 0;
+  }, [step]);
+
+  useEffect(() => {
     if (!isCameraReady || isUploading) return undefined;
-    const timer = window.setTimeout(() => {
-      void captureCurrentStep();
-    }, AUTO_CAPTURE_DELAY_MS[step]);
+    const interval = window.setInterval(() => {
+      if (isCapturingRef.current) return;
+      const now = window.performance.now();
+      if (now - lastCaptureAtRef.current < DETECTION_COOLDOWN_MS) return;
+
+      const detected = detectVisibleBusinessCard(videoRef.current, canvasRef.current);
+      setIsCardDetected(detected);
+      stableDetectionCountRef.current = detected
+        ? stableDetectionCountRef.current + 1
+        : 0;
+
+      if (stableDetectionCountRef.current >= REQUIRED_STABLE_DETECTIONS) {
+        stableDetectionCountRef.current = 0;
+        lastCaptureAtRef.current = now;
+        void captureCurrentStep();
+      }
+    }, DETECTION_INTERVAL_MS);
     return () => {
-      window.clearTimeout(timer);
+      window.clearInterval(interval);
     };
   }, [captureCurrentStep, isCameraReady, isUploading, step]);
 
@@ -135,9 +160,13 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
         <S.Frame aria-hidden="true" />
       </S.CameraArea>
       <S.Hint>
-        보이는 칸에 알맞게 명함의 {step === 'front' ? '앞면' : '뒷면'}을
-        비춰주세요
+        {isUploading
+          ? '명함 정보를 불러오는 중입니다'
+          : `${step === 'front' ? '앞면' : '뒷면'}을 프레임 안에 맞추면 자동으로 촬영돼요`}
       </S.Hint>
+      <S.StatusText $active={isCardDetected}>
+        {isCardDetected ? '명함을 인식했어요' : '명함을 찾는 중'}
+      </S.StatusText>
       {errorMessage ? <S.ErrorText>{errorMessage}</S.ErrorText> : null}
       <canvas ref={canvasRef} hidden />
     </S.Wrapper>
@@ -167,6 +196,45 @@ async function captureVideoFrame(
     }, 'image/jpeg', 0.9);
   });
   return new File([blob], `business-card-${step}.jpg`, { type: 'image/jpeg' });
+}
+
+function detectVisibleBusinessCard(
+  video: HTMLVideoElement | null,
+  canvas: HTMLCanvasElement | null,
+): boolean {
+  if (!video || !canvas || video.videoWidth === 0 || video.videoHeight === 0) {
+    return false;
+  }
+
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) return false;
+
+  const sourceWidth = video.videoWidth * 0.78;
+  const sourceHeight = video.videoHeight * 0.7;
+  const sourceX = (video.videoWidth - sourceWidth) / 2;
+  const sourceY = (video.videoHeight - sourceHeight) / 2;
+
+  canvas.width = DETECTION_SAMPLE_WIDTH;
+  canvas.height = DETECTION_SAMPLE_HEIGHT;
+  context.drawImage(
+    video,
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    0,
+    0,
+    DETECTION_SAMPLE_WIDTH,
+    DETECTION_SAMPLE_HEIGHT,
+  );
+
+  const imageData = context.getImageData(
+    0,
+    0,
+    DETECTION_SAMPLE_WIDTH,
+    DETECTION_SAMPLE_HEIGHT,
+  );
+  return detectBusinessCardFromImageData(imageData).detected;
 }
 
 function businessCardFromProfile(profile: IeumVisitorProfile): BusinessCard {
