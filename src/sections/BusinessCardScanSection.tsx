@@ -9,7 +9,7 @@ import * as S from './BusinessCardScanSection.styled';
 
 interface BusinessCardScanResult {
   readonly card: BusinessCard;
-  readonly visitorProfileId: string;
+  readonly visitorProfileId: string | null;
 }
 
 interface BusinessCardScanSectionProps {
@@ -28,6 +28,14 @@ const REQUIRED_STABLE_DETECTIONS = 1;
 const DETECTION_SAMPLE_WIDTH = 176;
 const DETECTION_SAMPLE_HEIGHT = 112;
 const DETECTION_COOLDOWN_MS = 900;
+const EMPTY_CARD: BusinessCard = {
+  companyName: '',
+  companyAddress: '',
+  name: '',
+  position: '',
+  phone: '',
+  email: '',
+};
 
 function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -35,6 +43,7 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
   const streamRef = useRef<MediaStream | null>(null);
   const frontFileRef = useRef<File | null>(null);
   const isCapturingRef = useRef(false);
+  const isMountedRef = useRef(true);
   const stableDetectionCountRef = useRef(0);
   const lastCaptureAtRef = useRef(0);
   const [step, setStep] = useState<ScanStep>('front');
@@ -44,6 +53,7 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    isMountedRef.current = true;
     let cancelled = false;
 
     navigator.mediaDevices
@@ -67,6 +77,7 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
       });
 
     return () => {
+      isMountedRef.current = false;
       cancelled = true;
       if (streamRef.current) {
         stopStream(streamRef.current);
@@ -88,9 +99,13 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
       });
     } catch (error) {
       if (!(error instanceof Error)) throw error;
-      setErrorMessage('명함 인식에 실패했습니다. 다시 찍거나 직접 입력해주세요');
+      if (isMountedRef.current) {
+        setErrorMessage('명함 인식에 실패했습니다. 다시 찍거나 직접 입력해주세요');
+      }
     } finally {
-      setIsUploading(false);
+      if (isMountedRef.current) {
+        setIsUploading(false);
+      }
     }
   }, [onScanned]);
 
@@ -109,8 +124,9 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
       setErrorMessage('앞면부터 다시 찍어주세요');
       return;
     }
+    onScanned({ card: EMPTY_CARD, visitorProfileId: null });
     void uploadCards(frontFile, file);
-  }, [step, uploadCards]);
+  }, [onScanned, step, uploadCards]);
 
   const captureCurrentStep = useCallback(async () => {
     if (isCapturingRef.current || isUploading) return;

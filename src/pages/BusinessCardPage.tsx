@@ -30,7 +30,7 @@ function BusinessCardPage() {
 
   const handleScanned = (result: {
     readonly card: BusinessCard;
-    readonly visitorProfileId: string;
+    readonly visitorProfileId: string | null;
   }) => {
     setCard(result.card);
     setVisitorProfileId(result.visitorProfileId);
