@@ -5,9 +5,9 @@ export const Wrapper = styled.section`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 18px;
-  padding: 28px ${({ theme }) => theme.layout.pagePadding} 36px;
+  justify-content: flex-start;
+  gap: 29px;
+  padding: min(27.2dvh, 232px) ${({ theme }) => theme.layout.pagePadding} 36px;
   background-color: ${({ theme }) => theme.colors.bgPlaceholder};
   min-height: 0;
   user-select: none;
@@ -43,7 +43,7 @@ export const Hint = styled.p`
   margin: 0;
   color: ${({ theme }) => theme.colors.white};
   font-size: 14px;
-  line-height: 1.45;
+  line-height: 20px;
   text-align: center;
   white-space: pre-line;
 `;
@@ -55,49 +55,4 @@ export const ErrorText = styled.p`
   font-size: 13px;
   line-height: 1.4;
   text-align: center;
-`;
-
-export const Actions = styled.div`
-  display: flex;
-  gap: 10px;
-  width: min(343px, 100%);
-`;
-
-export const CaptureButton = styled.button`
-  flex: 1;
-  height: 50px;
-  border: 0;
-  border-radius: 999px;
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: ${({ theme }) => theme.colors.white};
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: progress;
-  }
-`;
-
-export const PhotoPicker = styled.label`
-  position: relative;
-  flex: 1;
-  height: 50px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background-color: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.black};
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-
-  input {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-  }
 `;

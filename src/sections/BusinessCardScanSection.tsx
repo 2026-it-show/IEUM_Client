@@ -22,12 +22,19 @@ const CAMERA_CONSTRAINTS: MediaStreamConstraints = {
   audio: false,
 };
 
+const AUTO_CAPTURE_DELAY_MS: Record<ScanStep, number> = {
+  front: 1800,
+  back: 2400,
+};
+
 function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const frontFileRef = useRef<File | null>(null);
+  const isCapturingRef = useRef(false);
   const [step, setStep] = useState<ScanStep>('front');
+  const [isCameraReady, setIsCameraReady] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -45,10 +52,13 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
         const video = videoRef.current;
         if (!video) return;
         video.srcObject = stream;
+        video.onloadedmetadata = () => {
+          setIsCameraReady(true);
+        };
         void video.play();
       })
       .catch(() => {
-        setErrorMessage('카메라 권한을 허용하거나 사진을 선택해주세요');
+        setErrorMessage('카메라 권한을 허용해주세요');
       });
 
     return () => {
@@ -79,7 +89,7 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
     }
   }, [onScanned]);
 
-  const handleFile = useCallback((file: File) => {
+  const handleCapturedFile = useCallback((file: File) => {
     if (step === 'front') {
       frontFileRef.current = file;
       setStep('back');
@@ -95,14 +105,28 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
     void uploadCards(frontFile, file);
   }, [step, uploadCards]);
 
-  const handleCapture = useCallback(async () => {
+  const captureCurrentStep = useCallback(async () => {
+    if (isCapturingRef.current || isUploading) return;
+    isCapturingRef.current = true;
     try {
-      handleFile(await captureVideoFrame(videoRef.current, canvasRef.current, step));
+      handleCapturedFile(await captureVideoFrame(videoRef.current, canvasRef.current, step));
     } catch (error) {
       if (!(error instanceof Error)) throw error;
-      setErrorMessage('카메라 화면을 가져오지 못했습니다. 사진 선택을 사용해주세요');
+      setErrorMessage('명함을 프레임에 맞춰 다시 비춰주세요');
+    } finally {
+      isCapturingRef.current = false;
     }
-  }, [handleFile, step]);
+  }, [handleCapturedFile, isUploading, step]);
+
+  useEffect(() => {
+    if (!isCameraReady || isUploading) return undefined;
+    const timer = window.setTimeout(() => {
+      void captureCurrentStep();
+    }, AUTO_CAPTURE_DELAY_MS[step]);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [captureCurrentStep, isCameraReady, isUploading, step]);
 
   return (
     <S.Wrapper>
@@ -115,29 +139,6 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
         비춰주세요
       </S.Hint>
       {errorMessage ? <S.ErrorText>{errorMessage}</S.ErrorText> : null}
-      <S.Actions>
-        <S.PhotoPicker>
-          사진 선택
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            disabled={isUploading}
-            onChange={(event) => {
-              const file = event.currentTarget.files?.[0];
-              event.currentTarget.value = '';
-              if (file) handleFile(file);
-            }}
-          />
-        </S.PhotoPicker>
-        <S.CaptureButton
-          type="button"
-          disabled={isUploading}
-          onClick={handleCapture}
-        >
-          {isUploading ? '인식 중' : step === 'front' ? '앞면 촬영' : '뒷면 촬영'}
-        </S.CaptureButton>
-      </S.Actions>
       <canvas ref={canvasRef} hidden />
     </S.Wrapper>
   );

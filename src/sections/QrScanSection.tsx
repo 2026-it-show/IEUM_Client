@@ -34,7 +34,7 @@ function QrScanSection({ onScanned }: QrScanSectionProps) {
           });
       })
       .catch(() => {
-        setErrorMessage('카메라 권한을 허용하거나 QR 사진을 선택해주세요');
+        setErrorMessage('카메라 권한을 허용해주세요');
       });
 
     return () => {
@@ -42,18 +42,6 @@ function QrScanSection({ onScanned }: QrScanSectionProps) {
       controls?.stop();
     };
   }, [onScanned]);
-
-  const handleImageFile = async (file: File) => {
-    setErrorMessage(null);
-    try {
-      const payload = await decodeQrImage(file);
-      if (hasScannedRef.current) return;
-      hasScannedRef.current = true;
-      onScanned(payload);
-    } catch {
-      setErrorMessage('QR을 읽지 못했습니다. 더 선명한 사진을 선택해주세요');
-    }
-  };
 
   return (
     <S.Wrapper>
@@ -63,36 +51,8 @@ function QrScanSection({ onScanned }: QrScanSectionProps) {
       </S.CameraArea>
       <S.Hint>보이는 칸에 알맞게 QR을 비춰주세요</S.Hint>
       {errorMessage ? <S.ErrorText>{errorMessage}</S.ErrorText> : null}
-      <S.PhotoPicker>
-        QR 사진 선택
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={(event) => {
-            const file = event.currentTarget.files?.[0];
-            event.currentTarget.value = '';
-            if (file) void handleImageFile(file);
-          }}
-        />
-      </S.PhotoPicker>
     </S.Wrapper>
   );
-}
-
-async function decodeQrImage(file: File): Promise<string> {
-  const { BrowserQRCodeReader } = await import('@zxing/browser');
-  const reader = new BrowserQRCodeReader();
-  const url = URL.createObjectURL(file);
-  const image = new Image();
-  image.src = url;
-  await image.decode();
-  try {
-    const result = await reader.decodeFromImageElement(image);
-    return result.getText();
-  } finally {
-    URL.revokeObjectURL(url);
-  }
 }
 
 export default QrScanSection;

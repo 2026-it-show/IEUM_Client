@@ -20,12 +20,13 @@ export const Header = styled.header<{ $compact: boolean }>`
   flex-shrink: 0;
 `;
 
-export const AppBar = styled.div`
+export const AppBar = styled.div<{ $surface: 'default' | 'scan' }>`
   position: sticky;
   top: 0;
   z-index: 5;
   flex-shrink: 0;
-  background-color: ${({ theme }) => theme.colors.white};
+  background-color: ${({ theme, $surface }) =>
+    $surface === 'scan' ? theme.colors.bgPlaceholder : theme.colors.white};
 `;
 
 export const BackButton = styled.button<VariantProps>`
@@ -37,10 +38,10 @@ export const BackButton = styled.button<VariantProps>`
     resolveColor($color, theme.colors.white, theme.colors.black)};
 `;
 
-export const BackIcon = styled.img`
+export const BackIcon = styled.img<VariantProps>`
   width: 17px;
   height: 34px;
-  filter: none;
+  filter: ${({ $color }) => ($color === 'light' ? 'brightness(0) invert(1)' : 'none')};
 `;
 
 export const Title = styled.span`

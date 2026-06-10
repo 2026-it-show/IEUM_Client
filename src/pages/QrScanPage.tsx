@@ -10,7 +10,7 @@ interface QrScanPageProps {
 function QrScanPage({ onBack, onScanned }: QrScanPageProps) {
   return (
     <S.Page>
-      <BackHeader title="QR" onBack={onBack} color="light" />
+      <BackHeader title="QR" onBack={onBack} color="light" surface="scan" />
       <QrScanSection onScanned={onScanned} />
     </S.Page>
   );

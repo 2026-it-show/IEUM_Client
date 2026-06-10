@@ -9,6 +9,7 @@ interface BackHeaderProps {
   compact?: boolean;
   bandText?: string;
   bandColor?: string;
+  surface?: 'default' | 'scan';
 }
 
 function BackHeader({
@@ -18,9 +19,10 @@ function BackHeader({
   compact = false,
   bandText,
   bandColor,
+  surface = 'default',
 }: BackHeaderProps) {
   return (
-    <S.AppBar>
+    <S.AppBar $surface={surface}>
       <S.Header $compact={compact}>
         <S.BackButton
           type="button"
@@ -28,7 +30,12 @@ function BackHeader({
           aria-label="뒤로 가기"
           $color={color}
         >
-          <S.BackIcon src="/assets/icons/back_icon.svg" alt="" aria-hidden="true" />
+          <S.BackIcon
+            src="/assets/icons/back_icon.svg"
+            alt=""
+            aria-hidden="true"
+            $color={color}
+          />
           <S.Title>{title}</S.Title>
         </S.BackButton>
       </S.Header>

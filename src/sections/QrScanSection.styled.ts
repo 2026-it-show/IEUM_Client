@@ -5,9 +5,9 @@ export const Wrapper = styled.section`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 28px ${({ theme }) => theme.layout.pagePadding} 36px;
+  justify-content: flex-start;
+  gap: 29px;
+  padding: min(23.4dvh, 199px) ${({ theme }) => theme.layout.pagePadding} 36px;
   background-color: ${({ theme }) => theme.colors.bgPlaceholder};
   min-height: 0;
   user-select: none;
@@ -42,7 +42,7 @@ export const Hint = styled.p`
   margin: 0;
   color: ${({ theme }) => theme.colors.white};
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 20px;
   text-align: center;
 `;
 
@@ -53,26 +53,4 @@ export const ErrorText = styled.p`
   font-size: 13px;
   line-height: 1.4;
   text-align: center;
-`;
-
-export const PhotoPicker = styled.label`
-  position: relative;
-  width: min(277px, 78vw);
-  height: 50px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background-color: ${({ theme }) => theme.colors.white};
-  color: ${({ theme }) => theme.colors.black};
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-
-  input {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-  }
 `;

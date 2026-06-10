@@ -61,6 +61,7 @@ function BusinessCardPage() {
         title="채용 희망"
         onBack={handleBack}
         color={step === 'scan' ? 'light' : 'dark'}
+        surface={step === 'scan' ? 'scan' : 'default'}
       />
       {step === 'scan' ? (
         <BusinessCardScanSection onScanned={handleScanned} />
