@@ -24,7 +24,7 @@ const CAMERA_CONSTRAINTS: MediaStreamConstraints = {
 };
 
 const DETECTION_INTERVAL_MS = 220;
-const REQUIRED_STABLE_DETECTIONS = 4;
+const REQUIRED_STABLE_DETECTIONS = 1;
 const DETECTION_SAMPLE_WIDTH = 176;
 const DETECTION_SAMPLE_HEIGHT = 112;
 const DETECTION_COOLDOWN_MS = 900;
@@ -137,12 +137,14 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
       if (now - lastCaptureAtRef.current < DETECTION_COOLDOWN_MS) return;
 
       const detected = detectVisibleBusinessCard(videoRef.current, canvasRef.current);
-      setIsCardDetected(detected);
       stableDetectionCountRef.current = detected
         ? stableDetectionCountRef.current + 1
         : 0;
+      const shouldCapture =
+        stableDetectionCountRef.current >= REQUIRED_STABLE_DETECTIONS;
+      setIsCardDetected(shouldCapture);
 
-      if (stableDetectionCountRef.current >= REQUIRED_STABLE_DETECTIONS) {
+      if (shouldCapture) {
         stableDetectionCountRef.current = 0;
         lastCaptureAtRef.current = now;
         void captureCurrentStep();
