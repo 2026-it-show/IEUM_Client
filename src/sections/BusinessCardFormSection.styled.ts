@@ -37,13 +37,11 @@ export const FieldList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 0 12px;
 `;
 
 export const LoadingPanel = styled.div`
   min-height: 320px;
   padding: 40px 24px;
-  margin: 0 12px;
   border: 1px solid ${({ theme }) => theme.colors.gray200};
   border-radius: ${({ theme }) => theme.radius.md};
   display: flex;
