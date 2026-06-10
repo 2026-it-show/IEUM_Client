@@ -108,13 +108,11 @@ function getInitialPageState(): {
 
 function MainAppFlow() {
   const initial = getInitialPageState();
-  const initialGuideDismissed = initial.forceGuide
-    ? false
-    : hasDismissedOnboardingGuide();
+  const initialGuideDismissed = hasDismissedOnboardingGuide();
   const initialMapTutorialDismissed = hasDismissedMapTutorial();
   const [page, setPage] = useState<AppPage>(initial.page);
   const [serviceVisited, setServiceVisited] = useState(
-    !initial.actionsEnabled || (!initial.forceGuide && initialGuideDismissed),
+    !initial.actionsEnabled || !initial.forceGuide || initialGuideDismissed,
   );
   const [guideDismissed, setGuideDismissed] = useState(initialGuideDismissed);
   const [mapTutorialDismissed, setMapTutorialDismissed] = useState(
@@ -174,7 +172,8 @@ function MainAppFlow() {
         setSelectedCategory(booth.categoryId);
         setSelectedProject(null);
         setActionsEnabled(true);
-        setServiceVisited(false);
+        setGuideDismissed(hasDismissedOnboardingGuide());
+        setServiceVisited(hasDismissedOnboardingGuide());
         setServiceIntroBackTarget('map');
         const project =
           projects.find((item) => item.boothSlot === booth.title) ??
@@ -292,9 +291,10 @@ function MainAppFlow() {
             onBack={() => setPage('map')}
             onScanned={(payload) => {
               const entry = parseQrPayload(payload);
+              const hasSeenGuide = hasDismissedOnboardingGuide();
               setActionsEnabled(true);
-              setServiceVisited(false);
-              setGuideDismissed(false);
+              setServiceVisited(hasSeenGuide);
+              setGuideDismissed(hasSeenGuide);
               setToast(null);
               setServiceIntroBackTarget('map');
               if (entry.kind === 'project') {
