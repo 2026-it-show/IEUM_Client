@@ -10,6 +10,7 @@ import * as S from './BusinessCardScanSection.styled';
 interface BusinessCardScanResult {
   readonly card: BusinessCard;
   readonly visitorProfileId: string | null;
+  readonly isLoading?: boolean;
 }
 
 interface BusinessCardScanSectionProps {
@@ -96,9 +97,15 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
       onScanned({
         card: businessCardFromProfile(profile),
         visitorProfileId: profile.id,
+        isLoading: false,
       });
     } catch (error) {
       if (!(error instanceof Error)) throw error;
+      onScanned({
+        card: EMPTY_CARD,
+        visitorProfileId: null,
+        isLoading: false,
+      });
       if (isMountedRef.current) {
         setErrorMessage('명함 인식에 실패했습니다. 다시 찍거나 직접 입력해주세요');
       }
@@ -124,7 +131,7 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
       setErrorMessage('앞면부터 다시 찍어주세요');
       return;
     }
-    onScanned({ card: EMPTY_CARD, visitorProfileId: null });
+    onScanned({ card: EMPTY_CARD, visitorProfileId: null, isLoading: true });
     void uploadCards(frontFile, file);
   }, [onScanned, step, uploadCards]);
 
