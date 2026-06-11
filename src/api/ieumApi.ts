@@ -105,6 +105,8 @@ const FEEDBACK_DISABLED_BOOTH_SLOTS = new Set([
   'E2',
 ]);
 const PROJECT_LIST_CACHE_TTL_MS = 30_000;
+const OCR_POLL_INTERVAL_MS = 1_000;
+const OCR_POLL_TIMEOUT_MS = 30_000;
 const projectListCache = new Map<string, ProjectListCacheEntry>();
 
 export async function listProjectsByCategory(
@@ -258,9 +260,41 @@ export async function createRecruiterVisitorProfileFromBusinessCards(
   body.set('visitorType', 'recruiter');
   body.set('businessCardFront', frontFile);
   body.set('businessCardBack', backFile);
-  return requestData('/visitor-profiles', visitorProfileSchema, {
+  const profile = await requestData('/visitor-profiles', visitorProfileSchema, {
     method: 'POST',
     body,
+  });
+  return waitForVisitorProfileOcr(profile);
+}
+
+export function getVisitorProfile(visitorProfileId: string): Promise<IeumVisitorProfile> {
+  return requestData(`/visitor-profiles/${encodeURIComponent(visitorProfileId)}`, visitorProfileSchema);
+}
+
+async function waitForVisitorProfileOcr(profile: IeumVisitorProfile): Promise<IeumVisitorProfile> {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < OCR_POLL_TIMEOUT_MS) {
+    const latest = await getVisitorProfile(profile.id);
+    if (hasOcrResult(latest)) return latest;
+    await delay(OCR_POLL_INTERVAL_MS);
+  }
+  return profile;
+}
+
+function hasOcrResult(profile: IeumVisitorProfile): boolean {
+  return Boolean(
+    profile.ocrRawText ||
+      profile.ocrName ||
+      profile.ocrOrganization ||
+      profile.ocrPosition ||
+      profile.ocrEmail ||
+      profile.ocrPhone,
+  );
+}
+
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds);
   });
 }
 
