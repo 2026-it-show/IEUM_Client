@@ -148,6 +148,12 @@ function MainAppFlow() {
   const [pendingBoothSlot, setPendingBoothSlot] = useState<string | null>(
     initial.boothSlot,
   );
+  const [mapLocationVisible, setMapLocationVisible] = useState(
+    Boolean(initial.boothSlot || initial.projectId),
+  );
+  const [highlightedBoothId, setHighlightedBoothId] = useState<string | null>(
+    findBoothBySlot(initial.boothSlot)?.id ?? null,
+  );
   const [isResolvingBooth, setIsResolvingBooth] = useState(
     Boolean(initial.boothSlot && !initial.projectId),
   );
@@ -163,12 +169,12 @@ function MainAppFlow() {
 
   const goToServiceIntro = useCallback(() => {
     setPage('service-intro');
-  }, []);
+  }, [setPage]);
 
   const goToMap = useCallback(() => {
     setPage('map');
     navigate('/app', { replace: true });
-  }, [navigate]);
+  }, [navigate, setPage]);
 
   const handleServiceIntroBack = useCallback(() => {
     if (serviceIntroBackTarget === 'map') {
@@ -176,10 +182,14 @@ function MainAppFlow() {
       return;
     }
     setPage(serviceIntroBackTarget);
-  }, [goToMap, serviceIntroBackTarget]);
+  }, [goToMap, serviceIntroBackTarget, setPage]);
 
   const handleProjectLoaded = useCallback((project: IeumProjectDetail) => {
     setSelectedProject(project);
+    const booth = findBoothBySlot(project.boothSlot);
+    if (booth) {
+      setHighlightedBoothId(booth.id);
+    }
   }, []);
 
   useEffect(() => {
@@ -201,6 +211,8 @@ function MainAppFlow() {
     resolveProjectForBooth(booth)
       .then((resolved) => {
         if (!active) return;
+        setHighlightedBoothId(booth.id);
+        setMapLocationVisible(true);
         setSelectedCategory(resolved?.categoryId ?? booth.categoryId);
         setSelectedProject(null);
         setActionsEnabled(true);
@@ -228,12 +240,19 @@ function MainAppFlow() {
     return () => {
       active = false;
     };
-  }, [goToMap, goToServiceIntro, pendingBoothSlot]);
+  }, [
+    goToMap,
+    goToServiceIntro,
+    pendingBoothSlot,
+    setHighlightedBoothId,
+    setMapLocationVisible,
+  ]);
 
   const handleBoothPick = useCallback(
     async (booth: Booth) => {
       setSelectedCategory(booth.categoryId);
       setSelectedProject(null);
+      setHighlightedBoothId(booth.id);
       setActionsEnabled(false);
       setServiceVisited(true);
       setToast(null);
@@ -255,7 +274,18 @@ function MainAppFlow() {
         setPage('category-list');
       }
     },
-    [goToServiceIntro],
+    [
+      goToServiceIntro,
+      setActionsEnabled,
+      setHighlightedBoothId,
+      setPage,
+      setSelectedCategory,
+      setSelectedProject,
+      setSelectedProjectId,
+      setServiceIntroBackTarget,
+      setServiceVisited,
+      setToast,
+    ],
   );
 
   const handleFeedbackSubmit = useCallback(
@@ -278,7 +308,13 @@ function MainAppFlow() {
       setServiceVisited(true);
       goToServiceIntro();
     },
-    [goToServiceIntro, selectedProject?.acceptsFeedback, selectedProjectId],
+    [
+      goToServiceIntro,
+      selectedProject?.acceptsFeedback,
+      selectedProjectId,
+      setServiceVisited,
+      setToast,
+    ],
   );
 
   const handleHireSubmit = useCallback(
@@ -307,7 +343,7 @@ function MainAppFlow() {
       setServiceVisited(true);
       goToServiceIntro();
     },
-    [goToServiceIntro, selectedProjectId],
+    [goToServiceIntro, selectedProjectId, setServiceVisited, setToast],
   );
 
   const allMembersContacted = Boolean(
@@ -339,6 +375,7 @@ function MainAppFlow() {
               if (entry.kind === 'project') {
                 setSelectedProjectId(entry.projectId);
                 setSelectedProject(null);
+                setMapLocationVisible(true);
                 goToServiceIntro();
                 return;
               }
@@ -465,6 +502,8 @@ function MainAppFlow() {
               setSelectedCategory(categoryId);
               setPage('category-list');
             }}
+            highlightedBoothId={highlightedBoothId}
+            showLocationDebug={mapLocationVisible}
             showTutorial={!mapTutorialDismissed}
             onTutorialDismiss={() => {
               markMapTutorialDismissed();

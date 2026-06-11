@@ -23,6 +23,7 @@ import type {
 import {
   CategoryPillButton,
   CategoryTileButton,
+  LocationDebugOverlay,
   MapCanvas,
   MapTutorialOverlay,
 } from '@/components';
@@ -32,6 +33,8 @@ interface MapPageProps {
   onClickQr: () => void;
   onPickCategory: (categoryId: ExperienceCategoryId) => void;
   onPickBooth: (booth: Booth) => void;
+  highlightedBoothId?: string | null;
+  showLocationDebug?: boolean;
   showTutorial?: boolean;
   onTutorialDismiss?: () => void;
 }
@@ -119,10 +122,20 @@ function MapPage({
   onClickQr,
   onPickCategory,
   onPickBooth,
+  highlightedBoothId = null,
+  showLocationDebug = false,
   showTutorial = false,
   onTutorialDismiss,
 }: MapPageProps) {
   const stageRef = useRef<HTMLDivElement>(null);
+  const showQueryLocationDebug =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('debugLocation') === '1';
+  const shouldShowLocationDebug = showLocationDebug || showQueryLocationDebug;
+  const highlightedBooth =
+    highlightedBoothId === null
+      ? null
+      : BOOTHS.find((booth) => booth.id === highlightedBoothId) ?? null;
 
   const [stageSize, setStageSize] = useState({ w: 0, h: 0 });
   const [baseSize, setBaseSize] = useState({ w: 0, h: 0 });
@@ -458,6 +471,13 @@ function MapPage({
               />
             ),
           )}
+          {highlightedBooth ? (
+            <S.ProjectHighlight
+              $color={highlightedBooth.color}
+              style={tileStyle(highlightedBooth)}
+              aria-hidden="true"
+            />
+          ) : null}
 
         </S.ImageGroup>
 
@@ -495,6 +515,7 @@ function MapPage({
       {showTutorial && onTutorialDismiss ? (
         <MapTutorialOverlay onDismiss={onTutorialDismiss} />
       ) : null}
+      {shouldShowLocationDebug ? <LocationDebugOverlay /> : null}
     </S.Page>
   );
 }

@@ -39,6 +39,16 @@ export const FieldList = styled.div`
   gap: 20px;
 `;
 
+export const OcrNotice = styled.p`
+  padding: 14px 16px;
+  border: 1px solid rgba(224, 91, 102, 0.28);
+  border-radius: ${({ theme }) => theme.radius.sm};
+  background-color: rgba(224, 91, 102, 0.08);
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: 14px;
+  line-height: 1.45;
+`;
+
 export const LoadingPanel = styled.div`
   min-height: 320px;
   padding: 40px 24px;
