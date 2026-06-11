@@ -5,10 +5,14 @@ import {
 } from '@/api/ieumApi';
 import type { BusinessCard } from '@/data';
 import {
-  detectBusinessCardFromImageData,
-  type BusinessCardCandidateBox,
-  type BusinessCardCandidatePoint,
-} from '@/utils/businessCardDetection';
+  boxesAreSimilar,
+  detectVisibleBusinessCard,
+  smoothDetectionBox,
+  toSvgPoints,
+  visibleCaptureRect,
+  type CaptureRect,
+  type DetectionOverlayBox,
+} from '@/utils/businessCardCameraDetection';
 import * as S from './BusinessCardScanSection.styled';
 
 interface BusinessCardScanResult {
@@ -23,26 +27,6 @@ interface BusinessCardScanSectionProps {
 
 type ScanStep = 'front' | 'back';
 
-interface DetectionOverlayBox {
-  readonly points: readonly OverlayPoint[];
-  readonly bounds: OverlayBounds;
-  readonly captureRect: CaptureRect;
-}
-
-interface OverlayPoint {
-  readonly x: number;
-  readonly y: number;
-}
-
-interface OverlayBounds {
-  readonly left: number;
-  readonly top: number;
-  readonly width: number;
-  readonly height: number;
-}
-
-type CaptureRect = OverlayBounds;
-
 const CAMERA_CONSTRAINTS: MediaStreamConstraints = {
   video: {
     facingMode: { ideal: 'environment' },
@@ -56,8 +40,6 @@ const DETECTION_INTERVAL_MS = 120;
 const REQUIRED_STABLE_DETECTIONS = 4;
 const DETECTION_MISS_TOLERANCE = 4;
 const DETECTION_SMOOTHING = 0.45;
-const DETECTION_SAMPLE_WIDTH = 320;
-const DETECTION_SAMPLE_HEIGHT = 228;
 const DETECTION_COOLDOWN_MS = 900;
 const NEXT_SIDE_PREPARE_MS = 2200;
 const EMPTY_CARD: BusinessCard = {
@@ -82,6 +64,7 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
   const missCountRef = useRef(0);
   const lastCaptureAtRef = useRef(0);
   const detectionPausedUntilRef = useRef(0);
+  const isDetectingRef = useRef(false);
   const prepareTimerRef = useRef<number | null>(null);
   const [step, setStep] = useState<ScanStep>('front');
   const [isCameraReady, setIsCameraReady] = useState(false);
@@ -250,6 +233,7 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
     if (!isCameraReady || isUploading) return undefined;
     const interval = window.setInterval(() => {
       if (isCapturingRef.current) return;
+      if (isDetectingRef.current) return;
       const now = window.performance.now();
       if (now < detectionPausedUntilRef.current) {
         stableDetectionCountRef.current = 0;
@@ -262,45 +246,55 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
       }
       if (now - lastCaptureAtRef.current < DETECTION_COOLDOWN_MS) return;
 
-      const detection = detectVisibleBusinessCard(videoRef.current, canvasRef.current);
+      isDetectingRef.current = true;
+      void detectVisibleBusinessCard(videoRef.current, canvasRef.current)
+        .then((detection) => {
+          if (!isMountedRef.current) return;
 
-      if (!detection.detected || !detection.box) {
-        missCountRef.current += 1;
-        // 모션 블러 등으로 한두 프레임 놓친 경우 마지막 박스를 유지한다
-        if (missCountRef.current <= DETECTION_MISS_TOLERANCE) return;
-        stableDetectionCountRef.current = 0;
-        lastDetectionBoxRef.current = null;
-        smoothedBoxRef.current = null;
-        setIsCardDetected(false);
-        setDetectionBox(null);
-        return;
-      }
+          if (!detection.detected || !detection.box) {
+            missCountRef.current += 1;
+            // 모션 블러 등으로 한두 프레임 놓친 경우 마지막 박스를 유지한다
+            if (missCountRef.current <= DETECTION_MISS_TOLERANCE) return;
+            stableDetectionCountRef.current = 0;
+            lastDetectionBoxRef.current = null;
+            smoothedBoxRef.current = null;
+            setIsCardDetected(false);
+            setDetectionBox(null);
+            return;
+          }
 
-      missCountRef.current = 0;
-      const boxIsStable =
-        lastDetectionBoxRef.current &&
-        boxesAreSimilar(detection.box, lastDetectionBoxRef.current);
-      stableDetectionCountRef.current =
-        stableDetectionCountRef.current === 0 || boxIsStable
-          ? stableDetectionCountRef.current + 1
-          : 1;
-      lastDetectionBoxRef.current = detection.box;
-      const smoothed = smoothDetectionBox(
-        smoothedBoxRef.current,
-        detection.box,
-        DETECTION_SMOOTHING,
-      );
-      smoothedBoxRef.current = smoothed;
-      const shouldCapture =
-        stableDetectionCountRef.current >= REQUIRED_STABLE_DETECTIONS;
-      setIsCardDetected(true);
-      setDetectionBox(smoothed);
+          missCountRef.current = 0;
+          const boxIsStable =
+            lastDetectionBoxRef.current &&
+            boxesAreSimilar(detection.box, lastDetectionBoxRef.current);
+          stableDetectionCountRef.current =
+            stableDetectionCountRef.current === 0 || boxIsStable
+              ? stableDetectionCountRef.current + 1
+              : 1;
+          lastDetectionBoxRef.current = detection.box;
+          const smoothed = smoothDetectionBox(
+            smoothedBoxRef.current,
+            detection.box,
+            DETECTION_SMOOTHING,
+          );
+          smoothedBoxRef.current = smoothed;
+          const shouldCapture =
+            stableDetectionCountRef.current >= REQUIRED_STABLE_DETECTIONS;
+          setIsCardDetected(true);
+          setDetectionBox(smoothed);
 
-      if (shouldCapture) {
-        stableDetectionCountRef.current = 0;
-        lastCaptureAtRef.current = now;
-        void captureCurrentStep();
-      }
+          if (shouldCapture) {
+            stableDetectionCountRef.current = 0;
+            lastCaptureAtRef.current = now;
+            void captureCurrentStep();
+          }
+        })
+        .catch(() => {
+          missCountRef.current += 1;
+        })
+        .finally(() => {
+          isDetectingRef.current = false;
+        });
     }, DETECTION_INTERVAL_MS);
     return () => {
       window.clearInterval(interval);
@@ -401,212 +395,6 @@ async function captureVideoFrame(
   return new File([blob], `business-card-${step}.jpg`, { type: 'image/jpeg' });
 }
 
-function detectVisibleBusinessCard(
-  video: HTMLVideoElement | null,
-  canvas: HTMLCanvasElement | null,
-): {
-  readonly detected: boolean;
-  readonly box: DetectionOverlayBox | null;
-} {
-  if (!video || !canvas || video.videoWidth === 0 || video.videoHeight === 0) {
-    return { detected: false, box: null };
-  }
-
-  const context = canvas.getContext('2d', { willReadFrequently: true });
-  if (!context) return { detected: false, box: null };
-
-  // 화면(object-fit: cover)에 실제로 보이는 영역만 검출 대상으로 샘플링한다
-  const visible = visibleCaptureRect(video.videoWidth, video.videoHeight);
-  const sourceWidth = visible.width;
-  const sourceHeight = visible.height;
-  const sourceX = visible.left;
-  const sourceY = visible.top;
-
-  canvas.width = DETECTION_SAMPLE_WIDTH;
-  canvas.height = DETECTION_SAMPLE_HEIGHT;
-  context.drawImage(
-    video,
-    sourceX,
-    sourceY,
-    sourceWidth,
-    sourceHeight,
-    0,
-    0,
-    DETECTION_SAMPLE_WIDTH,
-    DETECTION_SAMPLE_HEIGHT,
-  );
-
-  const imageData = context.getImageData(
-    0,
-    0,
-    DETECTION_SAMPLE_WIDTH,
-    DETECTION_SAMPLE_HEIGHT,
-  );
-  const result = detectBusinessCardFromImageData(imageData);
-  return {
-    detected: result.detected,
-    box: result.box
-      ? toDetectionOverlayBox(result.box, {
-        sourceX,
-        sourceY,
-        sourceWidth,
-        sourceHeight,
-      })
-      : null,
-  };
-}
-
-// BusinessCardScanSection.styled.ts의 CameraArea aspect-ratio와 일치해야 한다
-const CAMERA_VIEW_ASPECT = 343 / 244;
-
-// object-fit: cover로 화면에 실제 표시되는 비디오 프레임 영역(픽셀 단위)
-function visibleCaptureRect(
-  videoWidth: number,
-  videoHeight: number,
-): CaptureRect {
-  const sourceAspect = videoWidth / videoHeight;
-  const widthFraction =
-    sourceAspect > CAMERA_VIEW_ASPECT ? CAMERA_VIEW_ASPECT / sourceAspect : 1;
-  const heightFraction =
-    sourceAspect > CAMERA_VIEW_ASPECT ? 1 : sourceAspect / CAMERA_VIEW_ASPECT;
-  const width = videoWidth * widthFraction;
-  const height = videoHeight * heightFraction;
-  return {
-    left: (videoWidth - width) / 2,
-    top: (videoHeight - height) / 2,
-    width,
-    height,
-  };
-}
-
-function toDetectionOverlayBox(
-  box: BusinessCardCandidateBox,
-  source: {
-    readonly sourceX: number;
-    readonly sourceY: number;
-    readonly sourceWidth: number;
-    readonly sourceHeight: number;
-  },
-): DetectionOverlayBox {
-  // 샘플 영역이 곧 화면에 보이는 영역이므로 좌표를 그대로 백분율로 옮긴다
-  const points = box.corners.map((point) => ({
-    x: point.x * 100,
-    y: point.y * 100,
-  }));
-  const rawBounds = boundsFromPoints(points);
-  const pointsForDisplay = shouldUseRectangleFallback(points, rawBounds)
-    ? rectanglePoints(rawBounds)
-    : points;
-  const bounds = boundsFromPoints(pointsForDisplay);
-  const sampleBounds = boundsFromPoints(
-    pointsForDisplay === points ? box.corners : rectanglePoints({
-      left: box.x,
-      top: box.y,
-      width: box.width,
-      height: box.height,
-    }),
-  );
-
-  return {
-    points: pointsForDisplay,
-    bounds,
-    captureRect: {
-      left: source.sourceX + sampleBounds.left * source.sourceWidth,
-      top: source.sourceY + sampleBounds.top * source.sourceHeight,
-      width: sampleBounds.width * source.sourceWidth,
-      height: sampleBounds.height * source.sourceHeight,
-    },
-  };
-}
-
-function boundsFromPoints(
-  points: readonly OverlayPoint[] | readonly BusinessCardCandidatePoint[],
-): OverlayBounds {
-  const xs = points.map((point) => point.x);
-  const ys = points.map((point) => point.y);
-  const left = Math.min(...xs);
-  const right = Math.max(...xs);
-  const top = Math.min(...ys);
-  const bottom = Math.max(...ys);
-  return {
-    left,
-    top,
-    width: right - left,
-    height: bottom - top,
-  };
-}
-
-function shouldUseRectangleFallback(
-  points: readonly OverlayPoint[],
-  bounds: OverlayBounds,
-): boolean {
-  if (bounds.width < 28 || bounds.height < 18) return true;
-  const boundsArea = bounds.width * bounds.height;
-  if (boundsArea <= 0) return true;
-  const polygonArea = Math.abs(
-    points.reduce((total, point, index) => {
-      const next = points[(index + 1) % points.length] ?? points[0];
-      return total + point.x * next.y - next.x * point.y;
-    }, 0) / 2,
-  );
-  return polygonArea / boundsArea < 0.42;
-}
-
-function rectanglePoints(bounds: OverlayBounds): readonly OverlayPoint[] {
-  const right = bounds.left + bounds.width;
-  const bottom = bounds.top + bounds.height;
-  return [
-    { x: bounds.left, y: bounds.top },
-    { x: right, y: bounds.top },
-    { x: right, y: bottom },
-    { x: bounds.left, y: bottom },
-  ];
-}
-
-function boxesAreSimilar(
-  current: DetectionOverlayBox,
-  previous: DetectionOverlayBox,
-): boolean {
-  const centerDistance = Math.hypot(
-    current.bounds.left + current.bounds.width / 2 -
-      (previous.bounds.left + previous.bounds.width / 2),
-    current.bounds.top + current.bounds.height / 2 -
-      (previous.bounds.top + previous.bounds.height / 2),
-  );
-  const widthDelta = Math.abs(current.bounds.width - previous.bounds.width);
-  const heightDelta = Math.abs(current.bounds.height - previous.bounds.height);
-  return centerDistance <= 14 && widthDelta <= 16 && heightDelta <= 14;
-}
-
-function smoothDetectionBox(
-  previous: DetectionOverlayBox | null,
-  next: DetectionOverlayBox,
-  factor: number,
-): DetectionOverlayBox {
-  if (!previous || previous.points.length !== next.points.length) return next;
-  const points = next.points.map((point, index) => {
-    const before = previous.points[index] ?? point;
-    return {
-      x: lerp(before.x, point.x, factor),
-      y: lerp(before.y, point.y, factor),
-    };
-  });
-  return {
-    points,
-    bounds: boundsFromPoints(points),
-    captureRect: {
-      left: lerp(previous.captureRect.left, next.captureRect.left, factor),
-      top: lerp(previous.captureRect.top, next.captureRect.top, factor),
-      width: lerp(previous.captureRect.width, next.captureRect.width, factor),
-      height: lerp(previous.captureRect.height, next.captureRect.height, factor),
-    },
-  };
-}
-
-function lerp(from: number, to: number, factor: number): number {
-  return from + (to - from) * factor;
-}
-
 function clampCaptureRect(
   rect: CaptureRect,
   videoWidth: number,
@@ -628,10 +416,6 @@ function clampCaptureRect(
     width: Math.max(1, width),
     height: Math.max(1, height),
   };
-}
-
-function toSvgPoints(points: readonly OverlayPoint[]): string {
-  return points.map((point) => `${point.x},${point.y}`).join(' ');
 }
 
 function businessCardFromProfile(profile: IeumVisitorProfile): BusinessCard {
