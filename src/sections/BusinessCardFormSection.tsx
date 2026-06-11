@@ -16,6 +16,8 @@ function BusinessCardFormSection({
   onChange,
   onSubmit,
 }: BusinessCardFormSectionProps) {
+  const hasMissingValue = BUSINESS_CARD_FIELDS.some(({ key }) => !values[key].trim());
+
   return (
     <S.Wrapper aria-busy={isLoading}>
       <S.ScrollArea>
@@ -30,6 +32,11 @@ function BusinessCardFormSection({
           </S.LoadingPanel>
         ) : (
           <S.FieldList>
+            {hasMissingValue ? (
+              <S.OcrNotice role="status">
+                인식되지 않은 항목이 있어요. 비어 있는 칸은 직접 입력해주세요.
+              </S.OcrNotice>
+            ) : null}
             {BUSINESS_CARD_FIELDS.map(({ key, label }) => (
               <InputField
                 key={key}
