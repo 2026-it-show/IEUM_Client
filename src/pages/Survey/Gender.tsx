@@ -51,7 +51,7 @@ const BackIcon = styled.img`
 
 const ProgressBarContainer = styled.div`
   position: absolute;
-  top: clamp(24px, 3.7dvh, 31px);
+  top: 31px;
   left: 57px;
   right: 24px;
   height: 6px;

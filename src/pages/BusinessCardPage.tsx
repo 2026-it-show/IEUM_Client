@@ -27,13 +27,16 @@ function BusinessCardPage() {
   const [step, setStep] = useState<Step>('scan');
   const [card, setCard] = useState<BusinessCard>(EMPTY_CARD);
   const [visitorProfileId, setVisitorProfileId] = useState<string | null>(null);
+  const [isOcrLoading, setIsOcrLoading] = useState(false);
 
   const handleScanned = (result: {
     readonly card: BusinessCard;
-    readonly visitorProfileId: string;
+    readonly visitorProfileId: string | null;
+    readonly isLoading?: boolean;
   }) => {
     setCard(result.card);
     setVisitorProfileId(result.visitorProfileId);
+    setIsOcrLoading(result.isLoading ?? false);
     setStep('form');
   };
 
@@ -68,6 +71,7 @@ function BusinessCardPage() {
       ) : (
         <BusinessCardFormSection
           values={card}
+          isLoading={isOcrLoading}
           onChange={handleChange}
           onSubmit={handleSubmit}
         />

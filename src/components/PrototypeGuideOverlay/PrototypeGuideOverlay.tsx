@@ -3,12 +3,14 @@ import * as S from './PrototypeGuideOverlay.styled';
 interface PrototypeGuideOverlayProps {
   message?: string;
   showFeedback?: boolean;
+  showHire?: boolean;
   onDismiss: () => void;
 }
 
 function PrototypeGuideOverlay({
   message = '프로젝트에 대한 피드백을 남기거나\n채용 의사를 밝힐 수 있습니다',
   showFeedback = true,
+  showHire = true,
   onDismiss,
 }: PrototypeGuideOverlayProps) {
   return (
@@ -30,9 +32,9 @@ function PrototypeGuideOverlay({
           draggable={false}
         />
       </S.Anchor>
-      <S.ActionRow $single={!showFeedback}>
+      <S.ActionRow>
         {showFeedback ? <S.FeedbackButton>피드백</S.FeedbackButton> : null}
-        <S.HireButton>채용</S.HireButton>
+        {showHire ? <S.HireButton>채용</S.HireButton> : null}
       </S.ActionRow>
     </S.Overlay>
   );

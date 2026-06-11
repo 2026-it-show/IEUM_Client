@@ -69,6 +69,11 @@ function ServiceIntroPage({
   const bandText = project
     ? `${project.experienceCategory?.toUpperCase() ?? 'PROJECT'} EXPERIENCE`
     : undefined;
+  const canFeedback = project?.acceptsFeedback !== false;
+  const canShowGuide = canFeedback || canHire;
+  const guideVisible = Boolean(
+    actionsEnabled && showGuide && !toast && canShowGuide,
+  );
 
   useEffect(() => {
     if (!projectId) {
@@ -103,6 +108,7 @@ function ServiceIntroPage({
         <ServiceIntroSection
           project={project}
           actionsEnabled={actionsEnabled}
+          hideCta={guideVisible}
           canHire={canHire}
           onFeedback={onFeedback}
           onHire={onHire}
@@ -116,10 +122,11 @@ function ServiceIntroPage({
           <S.StatusText>프로젝트 정보를 불러오지 못했습니다</S.StatusText>
         )
       )}
-      {actionsEnabled && showGuide && !toast && (
+      {guideVisible && (
         <PrototypeGuideOverlay
-          message={guideMessage(project)}
-          showFeedback={project?.acceptsFeedback !== false}
+          message={guideMessage({ canFeedback, canHire })}
+          showFeedback={canFeedback}
+          showHire={canHire}
           onDismiss={onGuideDismiss}
         />
       )}
@@ -160,11 +167,18 @@ function ServiceIntroSkeleton() {
   );
 }
 
-function guideMessage(project: IeumProjectDetail | null): string {
-  if (project?.acceptsFeedback === false) {
-    return '프로젝트에 대한\n채용 의사를 밝힐 수 있습니다';
+function guideMessage({
+  canFeedback,
+  canHire,
+}: {
+  canFeedback: boolean;
+  canHire: boolean;
+}): string {
+  if (canFeedback && canHire) {
+    return '프로젝트에 대한 피드백을 남기거나\n채용 의사를 밝힐 수 있습니다';
   }
-  return '프로젝트에 대한 피드백을 남기거나\n채용 의사를 밝힐 수 있습니다';
+  if (canHire) return '프로젝트에 대한\n채용 의사를 밝힐 수 있습니다';
+  return '프로젝트에 대한\n피드백을 남길 수 있습니다';
 }
 
 export default ServiceIntroPage;

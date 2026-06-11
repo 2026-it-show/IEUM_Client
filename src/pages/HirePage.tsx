@@ -7,13 +7,23 @@ interface HirePageProps {
   members: HireMember[];
   onBack: () => void;
   onSubmit: (memberId: string) => void;
+  onViewMemberProjects?: (member: HireMember) => void;
 }
 
-function HirePage({ members, onBack, onSubmit }: HirePageProps) {
+function HirePage({
+  members,
+  onBack,
+  onSubmit,
+  onViewMemberProjects,
+}: HirePageProps) {
   return (
     <S.Page>
       <BackHeader title="채용 희망" onBack={onBack} />
-      <HireFormSection members={members} onSubmit={onSubmit} />
+      <HireFormSection
+        members={members}
+        onSubmit={onSubmit}
+        onViewMemberProjects={onViewMemberProjects}
+      />
     </S.Page>
   );
 }

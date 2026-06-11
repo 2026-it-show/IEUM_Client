@@ -24,38 +24,74 @@ export const ScrollArea = styled.div`
   }
 `;
 
-export const MemberCard = styled.button<{ $selected: boolean }>`
+export const MemberItem = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 18px 22px;
-  border-radius: 14px;
-  border: 1.5px solid
-    ${({ $selected, theme }) =>
-      $selected ? theme.colors.primary : 'transparent'};
-  background-color: ${({ $selected }) =>
-    $selected ? '#FDECEF' : '#FFFFFF'};
-  box-shadow: ${({ $selected }) =>
+  gap: 10px;
+`;
+
+export const MemberCard = styled.button<{ $selected: boolean; $hired: boolean }>`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 28px;
+  border-radius: 12px;
+  border: ${({ $selected, theme }) =>
     $selected
-      ? 'none'
-      : '0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04)'};
+      ? `2px solid ${theme.colors.primary}`
+      : '1px solid #D9D9D9'};
+  background-color: ${({ $selected }) =>
+    $selected ? 'rgba(236, 86, 101, 0.2)' : '#FFFFFF'};
+  opacity: ${({ $hired }) => ($hired ? 0.55 : 1)};
   text-align: left;
-  cursor: pointer;
+  cursor: ${({ $hired }) => ($hired ? 'default' : 'pointer')};
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease;
 `;
 
-export const MemberName = styled.span`
-  font-size: 18px;
-  line-height: 1.2;
-  color: ${({ theme }) => theme.colors.black};
+export const MemberName = styled.span<{ $selected?: boolean }>`
+  font-size: 20px;
+  line-height: 30px;
+  color: ${({ $selected }) => ($selected ? '#555555' : '#222222')};
 `;
 
 export const MemberRole = styled.span`
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 21px;
+  color: #555555;
+`;
+
+export const HiredBadge = styled.span`
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  font-size: 12px;
+  line-height: 21px;
+  color: ${({ theme }) => theme.colors.primary};
+`;
+
+export const OtherProjectsRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+`;
+
+export const OtherProjectsText = styled.p`
+  font-size: 11px;
   line-height: 1;
-  color: #7a7a7a;
+  color: #555555;
+`;
+
+export const OtherProjectsLink = styled.button`
+  flex: 0 0 auto;
+  font-size: 12px;
+  line-height: 1;
+  color: #555555;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
 `;
 
 export const EmptyText = styled.p`

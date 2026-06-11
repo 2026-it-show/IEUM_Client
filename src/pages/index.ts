@@ -4,4 +4,5 @@ export { default as QrScanPage } from './QrScanPage';
 export { default as ServiceIntroPage } from './ServiceIntroPage';
 export { default as CategoryListPage } from './CategoryListPage';
 export { default as HirePage } from './HirePage';
+export { default as MemberProjectsPage } from './MemberProjectsPage';
 export { default as FeedbackPage } from './FeedbackPage';
