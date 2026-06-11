@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  createRecruiterVisitorProfileFromBusinessCards,
-  type IeumVisitorProfile,
-} from '@/api/ieumApi';
+import { createRecruiterVisitorProfileFromBusinessCards } from '@/api/ieumApi';
 import type { BusinessCard } from '@/data';
+import {
+  businessCardFromProfile,
+  EMPTY_BUSINESS_CARD,
+} from './businessCardScanMapping';
 import * as S from './BusinessCardScanSection.styled';
 
 interface BusinessCardScanResult {
@@ -28,15 +29,6 @@ const CAMERA_CONSTRAINTS: MediaStreamConstraints = {
 };
 
 const NEXT_SIDE_PREPARE_MS = 2200;
-const EMPTY_CARD: BusinessCard = {
-  companyName: '',
-  companyAddress: '',
-  name: '',
-  position: '',
-  phone: '',
-  email: '',
-};
-
 function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -103,7 +95,7 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
     } catch (error) {
       if (!(error instanceof Error)) throw error;
       onScanned({
-        card: EMPTY_CARD,
+        card: EMPTY_BUSINESS_CARD,
         visitorProfileId: null,
         isLoading: false,
       });
@@ -139,7 +131,11 @@ function BusinessCardScanSection({ onScanned }: BusinessCardScanSectionProps) {
       setErrorMessage('앞면부터 다시 찍어주세요');
       return;
     }
-    onScanned({ card: EMPTY_CARD, visitorProfileId: null, isLoading: true });
+    onScanned({
+      card: EMPTY_BUSINESS_CARD,
+      visitorProfileId: null,
+      isLoading: true,
+    });
     void uploadCards(frontFile, file);
   }, [onScanned, step, uploadCards]);
 
@@ -237,32 +233,6 @@ async function captureVideoFrame(
     }, 'image/jpeg', 0.92);
   });
   return new File([blob], `business-card-${step}.jpg`, { type: 'image/jpeg' });
-}
-
-function businessCardFromProfile(profile: IeumVisitorProfile): BusinessCard {
-  return {
-    companyName: profile.ocrOrganization ?? '',
-    companyAddress: inferAddress(profile.ocrRawText ?? ''),
-    name: profile.ocrName ?? '',
-    position: profile.ocrPosition ?? '',
-    phone: profile.ocrPhone ?? '',
-    email: profile.ocrEmail ?? '',
-  };
-}
-
-function inferAddress(rawText: string): string {
-  const lines = rawText
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  return lines.find(isAddressLine) ?? '';
-}
-
-function isAddressLine(line: string): boolean {
-  if (/@/.test(line) || /\d{2,4}[-\s)]\d{3,4}[-\s]\d{4}/.test(line)) {
-    return false;
-  }
-  return /(서울|경기|인천|부산|대구|광주|대전|울산|세종|제주|도|시|군|구|로|길)/.test(line);
 }
 
 function stopStream(stream: MediaStream): void {
