@@ -13,6 +13,7 @@ import { GlobalStyle, theme } from '@/styles';
 import {
   BusinessCardPage,
   CategoryListPage,
+  ExitFeedbackPage,
   FeedbackPage,
   HirePage,
   MapPage,
@@ -27,6 +28,7 @@ import {
   createRecruiterContact,
   type IeumProjectDetail,
 } from '@/api/ieumApi';
+import { getIeumFeedbackProjectId } from '@/utils/ieumFeedbackProject';
 import { loadSavedBusinessCard } from '@/storage/businessCardStorage';
 import {
   hasDismissedMapTutorial,
@@ -63,6 +65,7 @@ type AppPage =
   | 'hire'
   | 'member-projects'
   | 'member-project-view'
+  | 'exit-feedback'
   | 'feedback';
 
 type ServiceIntroBackTarget = 'map' | 'category-list';
@@ -76,6 +79,7 @@ const VALID_PAGES = new Set<AppPage>([
   'hire',
   'member-projects',
   'member-project-view',
+  'exit-feedback',
   'feedback',
 ]);
 
@@ -341,6 +345,29 @@ function MainAppFlow() {
     ],
   );
 
+  const handleExitFeedbackSubmit = useCallback(
+    async (message: string) => {
+      try {
+        const projectId = await getIeumFeedbackProjectId();
+        if (hasSubmittedProjectAction('feedback', projectId)) {
+          return 'duplicate';
+        }
+        const feedback = await createFeedback(projectId, message);
+        if (feedback.status === 'blocked') {
+          return 'blocked';
+        }
+        markProjectActionSubmitted('feedback', projectId);
+        setPage('map');
+        navigate('/app', { replace: true });
+        return 'success';
+      } catch (error) {
+        if (!(error instanceof Error)) throw error;
+        return 'error';
+      }
+    },
+    [navigate, setPage],
+  );
+
   const handleHireSubmit = useCallback(
     async (memberId: string) => {
       if (!selectedProjectId) return;
@@ -498,6 +525,8 @@ function MainAppFlow() {
             onSubmit={handleFeedbackSubmit}
           />
         );
+      case 'exit-feedback':
+        return <ExitFeedbackPage onSubmit={handleExitFeedbackSubmit} />;
       case 'business-card':
         return <BusinessCardPage />;
       case 'category-list':
@@ -522,6 +551,7 @@ function MainAppFlow() {
           <MapPage
             onClickQr={() => setPage('qr-scan')}
             onPickBooth={handleBoothPick}
+            onStopViewing={() => setPage('exit-feedback')}
             onPickCategory={(categoryId) => {
               setSelectedCategory(categoryId);
               setPage('category-list');

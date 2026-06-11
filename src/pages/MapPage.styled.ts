@@ -24,7 +24,7 @@ export const Page = styled.div`
 export const Header = styled.header`
   position: absolute;
   inset: 0 0 auto 0;
-  z-index: 6;
+  z-index: 9;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -43,7 +43,7 @@ export const Logo = styled.img`
   pointer-events: none;
 `;
 
-export const StopBadge = styled.span`
+export const StopBadge = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -53,6 +53,7 @@ export const StopBadge = styled.span`
   color: ${({ theme }) => theme.colors.white};
   font-size: 13px;
   line-height: 1;
+  pointer-events: auto;
 `;
 
 export const Stage = styled.div`
