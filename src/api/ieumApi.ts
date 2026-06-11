@@ -70,7 +70,11 @@ const contactSchema = z.object({
 
 const feedbackSchema = z.object({
   id: z.string(),
+  status: z.enum(['public', 'blocked', 'deleted']),
+  moderationReason: z.string().nullable().optional(),
 });
+
+export type IeumFeedback = z.infer<typeof feedbackSchema>;
 
 const projectInterestSchema = z.object({
   projectId: z.string(),
@@ -210,8 +214,8 @@ export async function markProjectInterest(
 export async function createFeedback(
   projectId: string,
   content: string,
-): Promise<void> {
-  await requestData(`/projects/${projectId}/feedback`, feedbackSchema, {
+): Promise<IeumFeedback> {
+  return requestData(`/projects/${projectId}/feedback`, feedbackSchema, {
     method: 'POST',
     body: JSON.stringify({ content }),
   });

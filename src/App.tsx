@@ -315,7 +315,13 @@ function MainAppFlow() {
         return;
       }
       try {
-        await createFeedback(selectedProjectId, message);
+        const feedback = await createFeedback(selectedProjectId, message);
+        if (feedback.status === 'blocked') {
+          setToast('부적절한 표현이 포함되어 있어요. 다시 작성해주세요');
+          setServiceVisited(true);
+          setPage('feedback');
+          return;
+        }
         markProjectActionSubmitted('feedback', selectedProjectId);
         setToast('소중한 의견 감사합니다');
       } catch (error) {
@@ -329,6 +335,7 @@ function MainAppFlow() {
       goToServiceIntro,
       selectedProject?.acceptsFeedback,
       selectedProjectId,
+      setPage,
       setServiceVisited,
       setToast,
     ],
