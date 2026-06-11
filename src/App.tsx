@@ -4,6 +4,8 @@ import {
   Navigate,
   Route,
   Routes,
+  useLocation,
+  useNavigate,
   useParams,
 } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
@@ -14,15 +16,15 @@ import {
   FeedbackPage,
   HirePage,
   MapPage,
+  MemberProjectsPage,
   QrScanPage,
   ServiceIntroPage,
 } from '@/pages';
-import { BOOTHS, type ExperienceCategoryId } from '@/data';
+import type { ExperienceCategoryId } from '@/data';
 import type { Booth } from '@/data';
 import {
   createFeedback,
   createRecruiterContact,
-  listProjectsByCategory,
   type IeumProjectDetail,
 } from '@/api/ieumApi';
 import { loadSavedBusinessCard } from '@/storage/businessCardStorage';
@@ -31,12 +33,19 @@ import {
   hasDismissedOnboardingGuide,
   hasCompletedInitialOnboarding,
   hasRecruiterPurpose,
+  hasSubmittedMemberContact,
   hasSubmittedProjectAction,
   markMapTutorialDismissed,
+  markMemberContactSubmitted,
   markOnboardingGuideDismissed,
   markProjectActionSubmitted,
 } from '@/storage/userInteractionStorage';
 import { buildSurveyStartPath } from '@/utils/surveyReturn';
+import {
+  findBoothBySlot,
+  normalizeBoothSlot,
+  resolveProjectForBooth,
+} from '@/utils/boothProjectResolver';
 import SplashScreen from '@/pages/Splash/SplashScreen';
 import Information from '@/pages/Survey/Information';
 import Agreement1 from '@/pages/Survey/Agreement1';
@@ -52,6 +61,8 @@ type AppPage =
   | 'business-card'
   | 'category-list'
   | 'hire'
+  | 'member-projects'
+  | 'member-project-view'
   | 'feedback';
 
 type ServiceIntroBackTarget = 'map' | 'category-list';
@@ -63,6 +74,8 @@ const VALID_PAGES = new Set<AppPage>([
   'business-card',
   'category-list',
   'hire',
+  'member-projects',
+  'member-project-view',
   'feedback',
 ]);
 
@@ -85,10 +98,16 @@ function getInitialPageState(): {
     };
   }
   const params = new URLSearchParams(window.location.search);
+  const pathBoothSlot = normalizeBoothSlot(
+    parsePathValue(window.location.pathname, ['booths', 'booth', 'b']),
+  );
+  const pathProjectId =
+    parsePathValue(window.location.pathname, ['projects', 'project', 'p']);
   const pageParam = params.get('page');
   const catParam = params.get('cat') as ExperienceCategoryId | null;
-  const projectId = params.get('projectId');
-  const boothSlot = params.get('boothSlot');
+  const projectId = params.get('projectId') ?? pathProjectId;
+  const boothSlot = normalizeBoothSlot(params.get('boothSlot')) ?? pathBoothSlot;
+  const isEntryRoute = Boolean(pathProjectId || pathBoothSlot);
   const page =
     pageParam && VALID_PAGES.has(pageParam as AppPage)
       ? (pageParam as AppPage)
@@ -101,12 +120,13 @@ function getInitialPageState(): {
     cat,
     projectId,
     boothSlot,
-    actionsEnabled: params.get('actions') === '1',
-    forceGuide: params.get('guide') === '1',
+    actionsEnabled: params.get('actions') === '1' || isEntryRoute,
+    forceGuide: params.get('guide') === '1' || isEntryRoute,
   };
 }
 
 function MainAppFlow() {
+  const navigate = useNavigate();
   const initial = getInitialPageState();
   const initialGuideDismissed = hasDismissedOnboardingGuide();
   const initialMapTutorialDismissed = hasDismissedMapTutorial();
@@ -135,10 +155,28 @@ function MainAppFlow() {
     useState<IeumProjectDetail | null>(null);
   const [serviceIntroBackTarget, setServiceIntroBackTarget] =
     useState<ServiceIntroBackTarget>('map');
+  const [memberProjectsTarget, setMemberProjectsTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [viewerProjectId, setViewerProjectId] = useState<string | null>(null);
 
   const goToServiceIntro = useCallback(() => {
     setPage('service-intro');
   }, []);
+
+  const goToMap = useCallback(() => {
+    setPage('map');
+    navigate('/app', { replace: true });
+  }, [navigate]);
+
+  const handleServiceIntroBack = useCallback(() => {
+    if (serviceIntroBackTarget === 'map') {
+      goToMap();
+      return;
+    }
+    setPage(serviceIntroBackTarget);
+  }, [goToMap, serviceIntroBackTarget]);
 
   const handleProjectLoaded = useCallback((project: IeumProjectDetail) => {
     setSelectedProject(project);
@@ -148,41 +186,32 @@ function MainAppFlow() {
     if (!pendingBoothSlot) return;
 
     let active = true;
-    const normalizedSlot = pendingBoothSlot.trim().toUpperCase();
-    const booth = BOOTHS.find(
-      (item) =>
-        !item.aux &&
-        item.serviceName &&
-        item.title.toUpperCase() === normalizedSlot,
-    );
+    const booth = findBoothBySlot(pendingBoothSlot);
 
     if (!booth) {
       Promise.resolve().then(() => {
         if (!active) return;
         setIsResolvingBooth(false);
         setPendingBoothSlot(null);
-        setPage('map');
+        goToMap();
       });
       return;
     }
 
-    listProjectsByCategory(booth.categoryId)
-      .then((projects) => {
+    resolveProjectForBooth(booth)
+      .then((resolved) => {
         if (!active) return;
-        setSelectedCategory(booth.categoryId);
+        setSelectedCategory(resolved?.categoryId ?? booth.categoryId);
         setSelectedProject(null);
         setActionsEnabled(true);
         setGuideDismissed(hasDismissedOnboardingGuide());
         setServiceVisited(hasDismissedOnboardingGuide());
         setServiceIntroBackTarget('map');
-        const project =
-          projects.find((item) => item.boothSlot === booth.title) ??
-          projects.find((item) => item.serviceName === booth.serviceName);
-        if (!project) {
+        if (!resolved) {
           setPage('category-list');
           return;
         }
-        setSelectedProjectId(project.id);
+        setSelectedProjectId(resolved.project.id);
         goToServiceIntro();
       })
       .catch((error: unknown) => {
@@ -199,7 +228,7 @@ function MainAppFlow() {
     return () => {
       active = false;
     };
-  }, [goToServiceIntro, pendingBoothSlot]);
+  }, [goToMap, goToServiceIntro, pendingBoothSlot]);
 
   const handleBoothPick = useCallback(
     async (booth: Booth) => {
@@ -210,17 +239,15 @@ function MainAppFlow() {
       setToast(null);
 
       try {
-        const projects = await listProjectsByCategory(booth.categoryId);
-        const project =
-          projects.find((item) => item.boothSlot === booth.title) ??
-          projects.find((item) => item.serviceName === booth.serviceName);
+        const resolved = await resolveProjectForBooth(booth);
 
-        if (!project) {
+        if (!resolved) {
           setPage('category-list');
           return;
         }
 
-        setSelectedProjectId(project.id);
+        setSelectedCategory(resolved.categoryId);
+        setSelectedProjectId(resolved.project.id);
         setServiceIntroBackTarget('map');
         goToServiceIntro();
       } catch (error) {
@@ -257,8 +284,8 @@ function MainAppFlow() {
   const handleHireSubmit = useCallback(
     async (memberId: string) => {
       if (!selectedProjectId) return;
-      if (hasSubmittedProjectAction('contact', selectedProjectId)) {
-        setToast('이미 채용 의사를 전달했습니다');
+      if (hasSubmittedMemberContact(selectedProjectId, memberId)) {
+        setToast('이미 해당 팀원에게 채용 의사를 전달했습니다');
         setServiceVisited(true);
         goToServiceIntro();
         return;
@@ -271,7 +298,7 @@ function MainAppFlow() {
           savedBusinessCard?.card ?? null,
           savedBusinessCard?.visitorProfileId ?? null,
         );
-        markProjectActionSubmitted('contact', selectedProjectId);
+        markMemberContactSubmitted(selectedProjectId, memberId);
         setToast('채용 의사가 성공적으로 전달되었습니다');
       } catch (error) {
         if (!(error instanceof Error)) throw error;
@@ -283,12 +310,24 @@ function MainAppFlow() {
     [goToServiceIntro, selectedProjectId],
   );
 
+  const allMembersContacted = Boolean(
+    selectedProjectId &&
+      selectedProject &&
+      selectedProject.id === selectedProjectId &&
+      selectedProject.members.length > 0 &&
+      selectedProject.members.every((member) =>
+        hasSubmittedMemberContact(selectedProjectId, member.id),
+      ),
+  );
+
   const renderPage = () => {
-    switch (page) {
+    const effectivePage: AppPage =
+      page === 'member-projects' && !memberProjectsTarget ? 'map' : page;
+    switch (effectivePage) {
       case 'qr-scan':
         return (
           <QrScanPage
-            onBack={() => setPage('map')}
+            onBack={goToMap}
             onScanned={(payload) => {
               const entry = parseQrPayload(payload);
               const hasSeenGuide = hasDismissedOnboardingGuide();
@@ -304,8 +343,9 @@ function MainAppFlow() {
                 return;
               }
               if (entry.kind === 'booth') {
-                setPendingBoothSlot(entry.boothSlot);
-                setIsResolvingBooth(true);
+                navigate(`/b/${encodeURIComponent(entry.boothSlot)}`, {
+                  replace: true,
+                });
                 return;
               }
               setToast('QR을 인식하지 못했습니다');
@@ -319,7 +359,7 @@ function MainAppFlow() {
             isResolvingProject={isResolvingBooth}
             actionsEnabled={actionsEnabled}
             canHire={actionsEnabled && hasRecruiterPurpose()}
-            onBack={() => setPage(serviceIntroBackTarget)}
+            onBack={handleServiceIntroBack}
             onHire={() => setPage('hire')}
             onFeedback={() => {
               if (selectedProject?.acceptsFeedback === false) return;
@@ -337,11 +377,7 @@ function MainAppFlow() {
                 ? hasSubmittedProjectAction('feedback', selectedProjectId)
                 : false
             }
-            contactSubmitted={
-              selectedProjectId
-                ? hasSubmittedProjectAction('contact', selectedProjectId)
-                : false
-            }
+            contactSubmitted={allMembersContacted}
             toast={toast}
             onToastDismiss={() => setToast(null)}
           />
@@ -353,9 +389,45 @@ function MainAppFlow() {
               id: member.id,
               name: member.name,
               role: roleLabel(member.roles),
+              hired: selectedProjectId
+                ? hasSubmittedMemberContact(selectedProjectId, member.id)
+                : false,
             }))}
             onBack={() => setPage('service-intro')}
             onSubmit={handleHireSubmit}
+            onViewMemberProjects={(member) => {
+              setMemberProjectsTarget({ id: member.id, name: member.name });
+              setPage('member-projects');
+            }}
+          />
+        );
+      case 'member-projects':
+        return memberProjectsTarget ? (
+          <MemberProjectsPage
+            memberId={memberProjectsTarget.id}
+            memberName={memberProjectsTarget.name}
+            excludeProjectId={selectedProjectId}
+            onBack={() => setPage('hire')}
+            onPickProject={(project) => {
+              setViewerProjectId(project.id);
+              setPage('member-project-view');
+            }}
+          />
+        ) : null;
+      case 'member-project-view':
+        return (
+          <ServiceIntroPage
+            projectId={viewerProjectId}
+            actionsEnabled={false}
+            canHire={false}
+            onBack={() => setPage('member-projects')}
+            onHire={() => undefined}
+            onFeedback={() => undefined}
+            onProjectLoaded={() => undefined}
+            showGuide={false}
+            onGuideDismiss={() => undefined}
+            feedbackSubmitted={false}
+            contactSubmitted={false}
           />
         );
       case 'feedback':
@@ -371,7 +443,7 @@ function MainAppFlow() {
         return (
           <CategoryListPage
             categoryId={selectedCategory}
-            onBack={() => setPage('map')}
+            onBack={goToMap}
             onPickProject={(project) => {
               setSelectedProjectId(project.id);
               setSelectedProject(null);
@@ -424,22 +496,22 @@ function ProjectEntryRoute() {
   );
 }
 
+function MainAppRoute() {
+  const location = useLocation();
+  return <MainAppFlow key={`${location.pathname}${location.search}`} />;
+}
+
 function BoothEntryRoute() {
   const { boothSlot } = useParams<{ boothSlot: string }>();
-  if (!boothSlot) {
+  const normalizedBoothSlot = normalizeBoothSlot(boothSlot);
+  if (!normalizedBoothSlot) {
     return <Navigate to="/app" replace />;
   }
-  const target = `/app?page=service-intro&boothSlot=${encodeURIComponent(boothSlot)}&actions=1&guide=1`;
   if (!hasCompletedInitialOnboarding()) {
-    return <Navigate to={buildSurveyStartPath(target)} replace />;
+    return <Navigate to={buildSurveyStartPath(`/b/${normalizedBoothSlot}`)} replace />;
   }
 
-  return (
-    <Navigate
-      to={target}
-      replace
-    />
-  );
+  return <MainAppRoute />;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -468,12 +540,14 @@ function parseQrPayload(payload: string): QrEntry {
     parsedUrl?.searchParams.get('projectId') ??
     parsePathValue(parsedUrl?.pathname, ['projects', 'project', 'p']);
   if (projectId) return { kind: 'project', projectId };
-  const boothSlot =
+  const boothSlot = normalizeBoothSlot(
     parsedUrl?.searchParams.get('boothSlot') ??
-    parsePathValue(parsedUrl?.pathname, ['booths', 'booth', 'b']);
+    parsePathValue(parsedUrl?.pathname, ['booths', 'booth', 'b']),
+  );
   if (boothSlot) return { kind: 'booth', boothSlot };
-  if (/^[A-G][1-9]$/i.test(trimmed)) {
-    return { kind: 'booth', boothSlot: trimmed.toUpperCase() };
+  const rawBoothSlot = normalizeBoothSlot(trimmed);
+  if (rawBoothSlot) {
+    return { kind: 'booth', boothSlot: rawBoothSlot };
   }
   return { kind: 'unknown' };
 }
@@ -491,6 +565,7 @@ function parsePathValue(pathname: string | undefined, names: readonly string[]):
   const segments = pathname.split('/').filter(Boolean);
   for (const name of names) {
     const index = segments.indexOf(name);
+    if (index < 0) continue;
     const value = segments[index + 1];
     if (value) return decodeURIComponent(value);
   }
@@ -517,7 +592,7 @@ function App() {
           <Route path="/booths/:boothSlot" element={<BoothEntryRoute />} />
           <Route path="/booth/:boothSlot" element={<BoothEntryRoute />} />
           <Route path="/b/:boothSlot" element={<BoothEntryRoute />} />
-          <Route path="/app/*" element={<MainAppFlow />} />
+          <Route path="/app/*" element={<MainAppRoute />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

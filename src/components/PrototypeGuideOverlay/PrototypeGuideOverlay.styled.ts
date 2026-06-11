@@ -37,23 +37,22 @@ export const Arrow = styled.img`
   transform: rotate(180deg);
 `;
 
-export const ActionRow = styled.div<{ $single: boolean }>`
+export const ActionRow = styled.div`
   position: absolute;
-  left: 23px;
-  right: 24px;
-  bottom: 25px;
+  left: ${({ theme }) => theme.layout.pagePadding};
+  right: ${({ theme }) => theme.layout.pagePadding};
+  bottom: ${({ theme }) => theme.layout.bottomCTAOffset};
   display: flex;
-  gap: 9px;
+  gap: 10px;
   pointer-events: none;
 
   > * {
-    flex: ${({ $single }) => ($single ? '0 0 167px' : '1 1 0')};
-    margin-left: ${({ $single }) => ($single ? 'auto' : 0)};
+    flex: 1 1 0;
   }
 `;
 
 const TutorialButton = styled.div`
-  height: 60px;
+  height: 56px;
   border-radius: ${({ theme }) => theme.radius.md};
   color: ${({ theme }) => theme.colors.white};
   display: flex;

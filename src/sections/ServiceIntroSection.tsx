@@ -13,6 +13,7 @@ import * as S from './ServiceIntroSection.styled';
 interface ServiceIntroSectionProps {
   project: IeumProjectDetail;
   actionsEnabled: boolean;
+  hideCta?: boolean;
   canHire: boolean;
   onFeedback: () => void;
   onHire: () => void;
@@ -23,6 +24,7 @@ interface ServiceIntroSectionProps {
 function ServiceIntroSection({
   project,
   actionsEnabled,
+  hideCta = false,
   canHire,
   onFeedback,
   onHire,
@@ -108,7 +110,7 @@ function ServiceIntroSection({
         </S.DetailList>
       </S.ScrollArea>
 
-      {actionsEnabled ? (
+      {actionsEnabled && !hideCta ? (
         <S.BottomCTA>
           {project.acceptsFeedback ? (
             <S.FeedbackButton

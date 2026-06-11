@@ -131,6 +131,65 @@ export async function listProjectsByCategory(
   return promise;
 }
 
+export async function listProjectsByMember(
+  memberUserId: string,
+): Promise<IeumProjectSummary[]> {
+  try {
+    const data = await requestData(
+      `/projects?memberUserId=${encodeURIComponent(memberUserId)}&limit=80&includeCounts=false`,
+      projectListSchema,
+    );
+    return data.items.map(applyFeedbackPolicy);
+  } catch (error) {
+    // 구버전 서버는 memberUserId 필터를 모르고 400을 반환한다 — 상세 조회로 폴백
+    if (error instanceof Error && error.message.includes('memberUserId')) {
+      return listProjectsByMemberFallback(memberUserId);
+    }
+    throw error;
+  }
+}
+
+async function listProjectsByMemberFallback(
+  memberUserId: string,
+): Promise<IeumProjectSummary[]> {
+  const data = await requestData(
+    '/projects?limit=80&includeCounts=false',
+    projectListSchema,
+  );
+  const memberships = await mapWithConcurrency(data.items, 8, async (summary) => {
+    try {
+      const detail = await getProjectDetail(summary.id);
+      return detail.members.some((member) => member.id === memberUserId);
+    } catch {
+      return false;
+    }
+  });
+  return data.items
+    .filter((_, index) => memberships[index])
+    .map(applyFeedbackPolicy);
+}
+
+async function mapWithConcurrency<TInput, TOutput>(
+  items: readonly TInput[],
+  concurrency: number,
+  task: (item: TInput) => Promise<TOutput>,
+): Promise<TOutput[]> {
+  const results: TOutput[] = new Array<TOutput>(items.length);
+  let nextIndex = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (nextIndex < items.length) {
+        const index = nextIndex;
+        nextIndex += 1;
+        results[index] = await task(items[index]);
+      }
+    },
+  );
+  await Promise.all(workers);
+  return results;
+}
+
 export async function getProjectDetail(
   projectId: string,
 ): Promise<IeumProjectDetail> {

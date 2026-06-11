@@ -50,6 +50,10 @@ function projectSubmissionKey(kind: SubmissionKind, projectId: string): string {
   return `ieum.projectSubmission.${kind}.${projectId}`;
 }
 
+function memberContactKey(projectId: string, memberId: string): string {
+  return `ieum.memberContact.${projectId}.${memberId}`;
+}
+
 export function hasDismissedOnboardingGuide(): boolean {
   return readFlag(GUIDE_DISMISSED_KEY);
 }
@@ -125,4 +129,18 @@ export function markProjectActionSubmitted(
   projectId: string,
 ): void {
   writeFlag(projectSubmissionKey(kind, projectId), true);
+}
+
+export function hasSubmittedMemberContact(
+  projectId: string,
+  memberId: string,
+): boolean {
+  return readFlag(memberContactKey(projectId, memberId));
+}
+
+export function markMemberContactSubmitted(
+  projectId: string,
+  memberId: string,
+): void {
+  writeFlag(memberContactKey(projectId, memberId), true);
 }
