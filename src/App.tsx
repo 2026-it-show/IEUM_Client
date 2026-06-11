@@ -149,7 +149,7 @@ function MainAppFlow() {
     initial.boothSlot,
   );
   const [mapLocationVisible, setMapLocationVisible] = useState(
-    Boolean(initial.boothSlot || initial.projectId),
+    Boolean(initial.boothSlot),
   );
   const [highlightedBoothId, setHighlightedBoothId] = useState<string | null>(
     findBoothBySlot(initial.boothSlot)?.id ?? null,
@@ -186,10 +186,6 @@ function MainAppFlow() {
 
   const handleProjectLoaded = useCallback((project: IeumProjectDetail) => {
     setSelectedProject(project);
-    const booth = findBoothBySlot(project.boothSlot);
-    if (booth) {
-      setHighlightedBoothId(booth.id);
-    }
   }, []);
 
   useEffect(() => {
@@ -252,7 +248,8 @@ function MainAppFlow() {
     async (booth: Booth) => {
       setSelectedCategory(booth.categoryId);
       setSelectedProject(null);
-      setHighlightedBoothId(booth.id);
+      setHighlightedBoothId(null);
+      setMapLocationVisible(false);
       setActionsEnabled(false);
       setServiceVisited(true);
       setToast(null);
@@ -278,6 +275,7 @@ function MainAppFlow() {
       goToServiceIntro,
       setActionsEnabled,
       setHighlightedBoothId,
+      setMapLocationVisible,
       setPage,
       setSelectedCategory,
       setSelectedProject,
