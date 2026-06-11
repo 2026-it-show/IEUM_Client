@@ -84,6 +84,7 @@ function getInitialPageState(): {
   cat: ExperienceCategoryId;
   projectId: string | null;
   boothSlot: string | null;
+  highlightBoothSlot: string | null;
   actionsEnabled: boolean;
   forceGuide: boolean;
 } {
@@ -93,6 +94,7 @@ function getInitialPageState(): {
       cat: 'global',
       projectId: null,
       boothSlot: null,
+      highlightBoothSlot: null,
       actionsEnabled: false,
       forceGuide: false,
     };
@@ -107,6 +109,7 @@ function getInitialPageState(): {
   const catParam = params.get('cat') as ExperienceCategoryId | null;
   const projectId = params.get('projectId') ?? pathProjectId;
   const boothSlot = normalizeBoothSlot(params.get('boothSlot')) ?? pathBoothSlot;
+  const highlightBoothSlot = normalizeBoothSlot(params.get('highlightBooth'));
   const isEntryRoute = Boolean(pathProjectId || pathBoothSlot);
   const page =
     pageParam && VALID_PAGES.has(pageParam as AppPage)
@@ -120,6 +123,7 @@ function getInitialPageState(): {
     cat,
     projectId,
     boothSlot,
+    highlightBoothSlot,
     actionsEnabled: params.get('actions') === '1' || isEntryRoute,
     forceGuide: params.get('guide') === '1' || isEntryRoute,
   };
@@ -149,10 +153,10 @@ function MainAppFlow() {
     initial.boothSlot,
   );
   const [mapLocationVisible, setMapLocationVisible] = useState(
-    Boolean(initial.boothSlot),
+    Boolean(initial.boothSlot || initial.highlightBoothSlot),
   );
   const [highlightedBoothId, setHighlightedBoothId] = useState<string | null>(
-    findBoothBySlot(initial.boothSlot)?.id ?? null,
+    findBoothBySlot(initial.boothSlot ?? initial.highlightBoothSlot)?.id ?? null,
   );
   const [isResolvingBooth, setIsResolvingBooth] = useState(
     Boolean(initial.boothSlot && !initial.projectId),
@@ -178,11 +182,26 @@ function MainAppFlow() {
 
   const handleServiceIntroBack = useCallback(() => {
     if (serviceIntroBackTarget === 'map') {
+      if (highlightedBoothId && mapLocationVisible) {
+        setPage('map');
+        navigate(
+          `/app?highlightBooth=${encodeURIComponent(highlightedBoothId)}&location=1`,
+          { replace: true },
+        );
+        return;
+      }
       goToMap();
       return;
     }
     setPage(serviceIntroBackTarget);
-  }, [goToMap, serviceIntroBackTarget, setPage]);
+  }, [
+    goToMap,
+    highlightedBoothId,
+    mapLocationVisible,
+    navigate,
+    serviceIntroBackTarget,
+    setPage,
+  ]);
 
   const handleProjectLoaded = useCallback((project: IeumProjectDetail) => {
     setSelectedProject(project);
