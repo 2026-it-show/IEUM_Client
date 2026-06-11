@@ -89,30 +89,17 @@ export const EmptyBooth = styled.div<{ $color: string }>`
 
 export const ProjectHighlight = styled.div<{ $color: string }>`
   position: absolute;
-  z-index: 5;
+  z-index: 4;
   transform: translate(-50%, -50%);
-  border: 6px solid #ffffff;
-  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.96);
+  border-radius: 4px;
   background: transparent;
   box-shadow:
-    0 0 0 6px ${({ $color }) => $color},
-    0 0 0 14px ${({ $color }) => $color}38,
-    0 8px 22px rgba(17, 24, 39, 0.28);
+    0 0 0 3px ${({ $color }) => $color}ee,
+    0 0 10px 4px ${({ $color }) => $color}8a,
+    0 0 22px 8px ${({ $color }) => $color}42;
+  filter: brightness(1.08);
   pointer-events: none;
-
-  &::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 22px;
-    height: 22px;
-    border: 5px solid #ffffff;
-    border-radius: 999px;
-    background: ${({ $color }) => $color};
-    box-shadow: 0 3px 10px rgba(17, 24, 39, 0.28);
-    transform: translate(-50%, -50%);
-  }
 `;
 
 /** Overlay layer for fixed-size pills (positioned in Stage screen space). */
