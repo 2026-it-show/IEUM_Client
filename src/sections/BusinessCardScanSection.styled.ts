@@ -1,18 +1,33 @@
 import styled from 'styled-components';
 
 export const Wrapper = styled.section`
+  position: relative;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: calc(
+    ${({ theme }) => theme.layout.bottomCTAOffset} + 56px + 28px
+  );
+  background-color: ${({ theme }) => theme.colors.bgPlaceholder};
+  user-select: none;
+  touch-action: manipulation;
+`;
+
+export const Content = styled.div`
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 18px;
-  padding: clamp(156px, 24dvh, 214px) ${({ theme }) => theme.layout.pagePadding}
-    36px;
-  background-color: ${({ theme }) => theme.colors.bgPlaceholder};
-  min-height: 0;
-  user-select: none;
-  touch-action: manipulation;
+  gap: 14px;
+  padding: clamp(92px, 15dvh, 156px) ${({ theme }) => theme.layout.pagePadding}
+    0;
+
+  @media (max-height: 760px) {
+    padding-top: clamp(72px, 11dvh, 104px);
+  }
 `;
 
 export const CameraArea = styled.div`
@@ -22,44 +37,16 @@ export const CameraArea = styled.div`
   min-height: min(244px, 32dvh);
   overflow: hidden;
   border-radius: 24px;
-  background-color: ${({ theme }) => theme.colors.white};
+  background-color: ${({ theme }) => theme.colors.black};
 `;
 
 export const Video = styled.video`
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
   object-fit: cover;
-`;
-
-export const Frame = styled.div`
-  position: absolute;
-  inset: 0;
-  border: 2px solid ${({ theme }) => theme.colors.primary};
-  border-radius: 24px;
-  pointer-events: none;
-`;
-
-export const DetectionPolygon = styled.svg`
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  filter: drop-shadow(0 0 9px rgba(232, 73, 91, 0.44));
-`;
-
-export const DetectionShape = styled.polygon`
-  fill: rgba(232, 73, 91, 0.08);
-  stroke: ${({ theme }) => theme.colors.primary};
-  stroke-width: 3;
-  stroke-linejoin: round;
-`;
-
-export const DetectionCorner = styled.circle`
-  fill: ${({ theme }) => theme.colors.primary};
-  stroke: ${({ theme }) => theme.colors.white};
-  stroke-width: 2;
 `;
 
 export const StepNotice = styled.div`
@@ -106,7 +93,7 @@ export const Hint = styled.p`
 
 export const StatusText = styled.p<{ $active: boolean }>`
   min-height: 20px;
-  margin: -6px 0 0;
+  margin: -4px 0 2px;
   color: ${({ theme, $active }) =>
     $active ? theme.colors.white : theme.colors.textLight};
   font-size: 13px;
@@ -125,26 +112,35 @@ export const ErrorText = styled.p`
 `;
 
 export const ShutterButton = styled.button`
-  position: absolute;
-  left: 50%;
-  bottom: 12px;
-  transform: translateX(-50%);
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  border: 4px solid rgba(255, 255, 255, 0.95);
-  background: rgba(255, 255, 255, 0.35);
+  width: 100%;
+  height: 56px;
+  padding: 0 18px;
+  border-radius: ${({ theme }) => theme.radius.md};
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: 20px;
+  line-height: 1;
   cursor: pointer;
-  transition: background 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter 0.15s ease;
 
   &:active {
-    background: rgba(255, 255, 255, 0.65);
+    filter: brightness(0.95);
   }
 
   &:disabled {
-    opacity: 0.4;
-    cursor: default;
+    background-color: ${({ theme }) => theme.colors.gray300};
+    cursor: not-allowed;
   }
+`;
+
+export const BottomAction = styled.div`
+  position: absolute;
+  left: ${({ theme }) => theme.layout.pagePadding};
+  right: ${({ theme }) => theme.layout.pagePadding};
+  bottom: ${({ theme }) => theme.layout.bottomCTAOffset};
 `;
 
 export const HiddenCanvas = styled.canvas`
