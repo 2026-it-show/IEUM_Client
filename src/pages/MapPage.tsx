@@ -33,7 +33,6 @@ interface MapPageProps {
   onClickQr: () => void;
   onPickCategory: (categoryId: ExperienceCategoryId) => void;
   onPickBooth: (booth: Booth) => void;
-  onStopViewing: () => void;
   highlightedBoothId?: string | null;
   showLocationDebug?: boolean;
   showTutorial?: boolean;
@@ -123,7 +122,6 @@ function MapPage({
   onClickQr,
   onPickCategory,
   onPickBooth,
-  onStopViewing,
   highlightedBoothId = null,
   showLocationDebug = false,
   showTutorial = false,
@@ -422,9 +420,6 @@ function MapPage({
           alt="I.EUM"
           draggable={false}
         />
-        <S.StopBadge type="button" onClick={onStopViewing}>
-          관람중단
-        </S.StopBadge>
       </S.Header>
 
       <S.Stage

@@ -6,4 +6,3 @@ export { default as CategoryListPage } from './CategoryListPage';
 export { default as HirePage } from './HirePage';
 export { default as MemberProjectsPage } from './MemberProjectsPage';
 export { default as FeedbackPage } from './FeedbackPage';
-export { default as ExitFeedbackPage } from './ExitFeedbackPage';
